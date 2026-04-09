@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | AllThingsFitness</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- ── NAV ───────────────────────── -->
+    <nav>
+        <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
+
+        <ul class="nav-links">
+            <li><a href="#">Workouts <span class="dropdown-arrow">▼</span></a></li>
+            <li><a href="#">Food <span class="dropdown-arrow">▼</span></a></li>
+            <li><a href="#">Chatbots <span class="dropdown-arrow">▼</span></a></li>
+        </ul>
+
+        <a href="login.html" class="nav-avatar">?</a>
+    </nav>
+
+    <!-- ── SIGN UP FORM ───────────────── -->
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h1>Create account</h1>
+            <p class="subtitle">Join AllThingsFitness and start your journey.</p>
+
+            <form id="signupForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="first_name">First Name</label>
+                        <input type="text" id="first_name" placeholder="John" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Last Name</label>
+                        <input type="text" id="last_name" placeholder="Doe" required />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="john@example.com" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="At least 6 characters" required />
+                </div>
+
+                <button type="submit">Sign Up</button>
+                <p class="error" id="errorMsg"></p>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a href="login.html">Log in</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('signupForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+
+            const first_name = document.getElementById('first_name').value.trim();
+            const last_name  = document.getElementById('last_name').value.trim();
+            const email      = document.getElementById('email').value.trim();
+            const password   = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ first_name, last_name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorMsg.textContent = data.message;
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                // Store token and user info then redirect
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = 'dashboard.html';
+
+            } catch (err) {
+                errorMsg.textContent = 'Could not connect to the server. Is it running?';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+
+</body>
+</html>

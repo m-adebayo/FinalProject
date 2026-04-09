@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllThingsFitness</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!--NAV -->
+    <nav>
+        <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
+
+        <ul class="nav-links">
+            <li><a href="#">Workouts <span class="dropdown-arrow">▼</span></a></li>
+            <li><a href="#">Food <span class="dropdown-arrow">▼</span></a></li>
+            <li><a href="#">Chatbots <span class="dropdown-arrow">▼</span></a></li>
+        </ul>
+
+        <a href="login.html" class="nav-avatar" id="avatarBtn">?</a>
+    </nav>
+
+    <!-- ── HERO ──────────────────────── -->
+    <section class="hero">
+
+        <!-- Text content -->
+        <div class="hero-content">
+            <p class="hero-quote">"The body achieves what the mind believes" – Napoleon Hill</p>
+            <p class="hero-tagline">Personalised fitness and nutrition guidance, built around you.</p>
+            <a href="signup.html" class="btn-primary">Get Started</a>
+        </div>
+
+    </section>
+
+    <script>
+        // Show initial of logged-in user in the avatar, or '?' if not logged in
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        const avatarBtn = document.getElementById('avatarBtn');
+        if (user && user.first_name) {
+            avatarBtn.textContent = user.first_name[0].toUpperCase();
+            avatarBtn.href = 'dashboard.html';
+        }
+    </script>
+
+</body>
+</html>
