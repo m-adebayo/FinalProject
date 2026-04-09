@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Setup | AllThingsFitness</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- ── NAV ───────────────────────── -->
+    <nav>
+        <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
+
+        <ul class="nav-links">
+            <li><a href="#">Workouts</a></li>
+            <li><a href="#">Food</a></li>
+            <li><a href="#">Chatbots</a></li>
+        </ul>
+
+        <a href="login.html" class="nav-avatar" id="avatarBtn">?</a>
+    </nav>
+
+    <!-- ── PROFILE FORM ──────────────── -->
+    <div class="auth-wrapper">
+        <div class="auth-card profile-card">
+            <h1>Set up your profile</h1>
+            <p class="subtitle">Tell us about yourself so we can personalise your experience.</p>
+
+            <form id="profileForm">
+
+                <!-- Gender + Age -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <select id="gender" required>
+                            <option value="" disabled selected>Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="age">Age</label>
+                        <input type="number" id="age" placeholder="e.g. 22" min="10" max="120" required />
+                    </div>
+                </div>
+
+                <!-- Height + Weight -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="number" id="height" placeholder="e.g. 175" min="50" max="300" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" placeholder="e.g. 70" min="20" max="500" required />
+                    </div>
+                </div>
+
+                <!-- Fitness Level -->
+                <div class="form-group">
+                    <label for="fitness_level">Fitness Level</label>
+                    <select id="fitness_level" required>
+                        <option value="" disabled selected>Select your level</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+
+                <!-- Goal -->
+                <div class="form-group">
+                    <label for="goal">Your Goal</label>
+                    <select id="goal" required>
+                        <option value="" disabled selected>Select your goal</option>
+                        <option value="lose_weight">Lose Weight</option>
+                        <option value="build_muscle">Build Muscle</option>
+                        <option value="maintain">Maintain</option>
+                        <option value="endurance">Endurance</option>
+                    </select>
+                </div>
+
+                <!-- Dietary Preferences -->
+                <div class="form-group">
+                    <label>Dietary Preferences <span class="label-hint">(select all that apply)</span></label>
+                    <div class="tag-group">
+                        <label class="tag-label"><input type="checkbox" value="vegetarian" /> Vegetarian</label>
+                        <label class="tag-label"><input type="checkbox" value="vegan" /> Vegan</label>
+                        <label class="tag-label"><input type="checkbox" value="gluten-free" /> Gluten-Free</label>
+                        <label class="tag-label"><input type="checkbox" value="dairy-free" /> Dairy-Free</label>
+                        <label class="tag-label"><input type="checkbox" value="halal" /> Halal</label>
+                        <label class="tag-label"><input type="checkbox" value="keto" /> Keto</label>
+                        <label class="tag-label"><input type="checkbox" value="none" id="dietNone" /> None</label>
+                    </div>
+                </div>
+
+                <!-- Medical Flags -->
+                <div class="form-group">
+                    <label>Medical Flags <span class="label-hint">(select all that apply)</span></label>
+                    <div class="tag-group">
+                        <label class="tag-label"><input type="checkbox" value="diabetes" /> Diabetes</label>
+                        <label class="tag-label"><input type="checkbox" value="hypertension" /> Hypertension</label>
+                        <label class="tag-label"><input type="checkbox" value="asthma" /> Asthma</label>
+                        <label class="tag-label"><input type="checkbox" value="heart condition" /> Heart Condition</label>
+                        <label class="tag-label"><input type="checkbox" value="joint pain" /> Joint Pain</label>
+                        <label class="tag-label"><input type="checkbox" value="none" id="medNone" /> None</label>
+                    </div>
+                </div>
+
+                <button type="submit">Save Profile</button>
+                <p class="error" id="errorMsg"></p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Redirect to login if not logged in
+        const token = localStorage.getItem('token');
+        const user  = JSON.parse(localStorage.getItem('user') || 'null');
+
+        if (!token || !user) {
+            window.location.href = 'login.html';
+        }
+
+        // Show user initial in avatar
+        const avatarBtn = document.getElementById('avatarBtn');
+        if (user && user.first_name) {
+            avatarBtn.textContent = user.first_name[0].toUpperCase();
+        }
+
+        // "None" checkbox clears all others in its group
+        function setupNoneCheckbox(noneId, groupSelector) {
+            const noneBox = document.getElementById(noneId);
+            const siblings = [...document.querySelectorAll(`${groupSelector} input[type="checkbox"]`)]
+                              .filter(cb => cb !== noneBox);
+
+            noneBox.addEventListener('change', () => {
+                if (noneBox.checked) siblings.forEach(cb => cb.checked = false);
+            });
+            siblings.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    if (cb.checked) noneBox.checked = false;
+                });
+            });
+        }
+
+        setupNoneCheckbox('dietNone', '.tag-group:nth-of-type(1)');
+        setupNoneCheckbox('medNone',  '.tag-group:nth-of-type(2)');
+
+        // Helper to get checked values from a tag group
+        function getChecked(groupEl) {
+            return [...groupEl.querySelectorAll('input[type="checkbox"]:checked')]
+                    .map(cb => cb.value)
+                    .filter(v => v !== 'none');
+        }
+
+        // Form submit
+        const form     = document.getElementById('profileForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+
+            const tagGroups = document.querySelectorAll('.tag-group');
+
+            const payload = {
+                gender:               document.getElementById('gender').value,
+                age:                  parseInt(document.getElementById('age').value),
+                height:               parseFloat(document.getElementById('height').value),
+                weight:               parseFloat(document.getElementById('weight').value),
+                fitness_level:        document.getElementById('fitness_level').value,
+                goal:                 document.getElementById('goal').value,
+                dietary_preferences:  getChecked(tagGroups[0]),
+                medical_flags:        getChecked(tagGroups[1])
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/profile/setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorMsg.textContent = data.message;
+                    errorMsg.style.display = 'block';
+                    return;
+                }
+
+                window.location.href = 'dashboard.html';
+
+            } catch (err) {
+                errorMsg.textContent = 'Could not connect to the server. Is it running?';
+                errorMsg.style.display = 'block';
+            }
+        });
+    </script>
+
+</body>
+</html>

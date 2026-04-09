@@ -87,10 +87,10 @@
                     return;
                 }
 
-                // Store token and user info then redirect
+                // Store token and user info then redirect to profile setup
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
-                window.location.href = 'dashboard.html';
+                window.location.href = 'profile.html';
 
             } catch (err) {
                 errorMsg.textContent = 'Could not connect to the server. Is it running?';

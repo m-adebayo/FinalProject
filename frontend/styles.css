@@ -291,6 +291,55 @@ button[type="submit"]:hover {
     text-decoration: underline;
 }
 
+/* ── PROFILE PAGE ────────────────────── */
+.profile-card {
+    max-width: 540px;
+}
+
+.label-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+}
+
+.tag-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color var(--transition), color var(--transition), background var(--transition);
+    user-select: none;
+}
+
+.tag-label input[type="checkbox"] {
+    display: none;
+}
+
+.tag-label:hover {
+    border-color: var(--green);
+    color: var(--text);
+}
+
+.tag-label:has(input:checked) {
+    border-color: var(--green);
+    background: rgba(118, 255, 3, 0.12);
+    color: var(--green);
+}
+
 /* ── DIVIDER ─────────────────────────── */
 .divider {
     display: flex;
