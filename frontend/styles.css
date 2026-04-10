@@ -340,6 +340,292 @@ button[type="submit"]:hover {
     color: var(--green);
 }
 
+/* ── WORKOUT / PLAN PAGE ─────────────── */
+.plan-wrapper {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+}
+
+.plan-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.plan-header h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.plan-header h1 span {
+    color: var(--green);
+}
+
+.btn-generate {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.75rem;
+    background: var(--green);
+    color: #0a1118;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.btn-generate:hover { background: var(--green-hover); transform: translateY(-1px); }
+.btn-generate:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(10,17,24,0.3);
+    border-top-color: #0a1118;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.day-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.day-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.day-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition);
+}
+
+.day-card-header:hover { background: rgba(255,255,255,0.04); }
+
+.day-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.day-badge {
+    background: rgba(118,255,3,0.15);
+    color: var(--green);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.day-name {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.day-toggle {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    transition: transform 0.2s;
+}
+
+.day-card.open .day-toggle { transform: rotate(180deg); }
+
+.day-body {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.day-card.open .day-body { display: flex; }
+
+.exercise-card {
+    display: flex;
+    gap: 1rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 0.9rem;
+    align-items: flex-start;
+}
+
+.exercise-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.exercise-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    margin-bottom: 0.3rem;
+}
+
+.exercise-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.55rem;
+}
+
+.tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.07);
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+.tag.green {
+    background: rgba(118,255,3,0.12);
+    color: var(--green);
+}
+
+.prescription {
+    font-size: 0.85rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.prescription span { color: var(--green); }
+
+
+.save-strip {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+    padding: 1rem 1.25rem;
+    background: rgba(118,255,3,0.07);
+    border: 1px solid rgba(118,255,3,0.2);
+    border-radius: 12px;
+}
+
+.save-strip p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.btn-save {
+    padding: 0.65rem 1.5rem;
+    background: var(--green);
+    color: #0a1118;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.btn-save:hover { background: var(--green-hover); }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.history-section {
+    margin-top: 3rem;
+}
+
+.history-section h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-muted);
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    gap: 1rem;
+}
+
+.history-item span {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+}
+
+.history-item strong {
+    font-size: 0.92rem;
+}
+
+.btn-load {
+    padding: 0.4rem 1rem;
+    background: transparent;
+    border: 1px solid var(--green);
+    color: var(--green);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--transition);
+}
+
+.btn-load:hover { background: rgba(118,255,3,0.1); }
+
+.status-msg {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.status-msg.success { color: var(--green); }
+.status-msg.error   { color: #f87171; }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+
+.empty-state .emoji { font-size: 2.5rem; margin-bottom: 0.75rem; }
+.empty-state p { font-size: 0.95rem; }
+
+.incomplete-banner {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
+    color: #f87171;
+    margin-bottom: 1.5rem;
+}
+
+.incomplete-banner a { color: #f87171; font-weight: 700; }
+
 /* ── DIVIDER ─────────────────────────── */
 .divider {
     display: flex;

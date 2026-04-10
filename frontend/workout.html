@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Workout Plan | AllThingsFitness</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- ── NAV ───────────────────────────────── -->
+    <nav>
+        <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
+        <ul class="nav-links">
+            <li><a href="workout.html">Workouts</a></li>
+            <li><a href="#">Food</a></li>
+            <li><a href="#">Chatbots</a></li>
+        </ul>
+        <a href="login.html" class="nav-avatar" id="avatarBtn">?</a>
+    </nav>
+
+    <!-- ── MAIN ─────────────────────────────── -->
+    <div class="plan-wrapper">
+
+        <div id="incompleteBanner" class="incomplete-banner" style="display:none">
+            ⚠️ Your profile isn't set up yet. <a href="profile.html">Complete your profile</a> so we can build a personalised plan for you.
+        </div>
+
+        <div class="plan-header">
+            <div>
+                <h1>Your <span>Workout Plan</span></h1>
+                <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.3rem" id="planSubtitle">
+                    Hit generate to build a plan based on your profile.
+                </p>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem">
+                <button class="btn-generate" id="generateBtn">
+                    <div class="spinner" id="spinner"></div>
+                    <span id="generateLabel">⚡ Generate My Plan</span>
+                </button>
+                <p class="status-msg" id="genStatus"></p>
+            </div>
+        </div>
+
+        <!-- Plan days rendered here -->
+        <div id="planContainer"></div>
+
+        <!-- Save strip -->
+        <div class="save-strip" id="saveStrip">
+            <p>Happy with this plan? Save it so you can come back to it.</p>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem">
+                <button class="btn-save" id="saveBtn">💾 Save This Plan</button>
+                <p class="status-msg" id="saveStatus"></p>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="history-section">
+            <h2>Previously Saved Plans</h2>
+            <div id="historyList"><p style="color:var(--text-muted);font-size:0.88rem">Loading history…</p></div>
+        </div>
+
+    </div>
+
+    <script>
+        const API = 'http://localhost:5000';
+        const token = localStorage.getItem('token');
+        let user = null;
+        try { user = JSON.parse(localStorage.getItem('user') || 'null'); } catch {}
+
+        // Redirect if not logged in
+        if (!token || !user) window.location.href = 'login.html';
+
+        // Avatar initial
+        const avatarBtn = document.getElementById('avatarBtn');
+        if (user && user.first_name) avatarBtn.textContent = user.first_name[0].toUpperCase();
+
+        // ── Wire up buttons ───────────────────────────────────────────────────
+        document.getElementById('generateBtn').addEventListener('click', generatePlan);
+        document.getElementById('saveBtn').addEventListener('click', savePlan);
+
+        // ── Saved plan state ──────────────────────────────────────────────────
+        let currentPlan = null;
+
+        // ── Generate plan ─────────────────────────────────────────────────────
+        async function generatePlan() {
+            const btn     = document.getElementById('generateBtn');
+            const spinner = document.getElementById('spinner');
+            const label   = document.getElementById('generateLabel');
+            const status  = document.getElementById('genStatus');
+
+            btn.disabled = true;
+            spinner.style.display = 'block';
+            label.textContent = 'Building your plan…';
+            status.textContent = '';
+            document.getElementById('saveStrip').style.display = 'none';
+            document.getElementById('planContainer').innerHTML = '';
+
+            try {
+                const res = await fetch(`${API}/api/plan/generate`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    if (res.status === 400) {
+                        document.getElementById('incompleteBanner').style.display = 'block';
+                    }
+                    status.textContent = data.message;
+                    status.className = 'status-msg error';
+                    return;
+                }
+
+                document.getElementById('incompleteBanner').style.display = 'none';
+                currentPlan = data;
+                renderPlan(data);
+
+                document.getElementById('planSubtitle').textContent =
+                    `${data.plan_name} — ${data.days.length} day${data.days.length !== 1 ? 's' : ''} a week`;
+                document.getElementById('saveStrip').style.display = 'flex';
+
+            } catch (err) {
+                status.textContent = 'Could not reach the server. Is it running?';
+                status.className = 'status-msg error';
+            } finally {
+                btn.disabled = false;
+                spinner.style.display = 'none';
+                label.textContent = '⚡ Regenerate';
+            }
+        }
+
+        // ── Render plan ────────────────────────────────────────────────────────
+        function renderPlan(plan) {
+            const container = document.getElementById('planContainer');
+            container.innerHTML = '';
+
+            if (!plan.days || plan.days.length === 0) {
+                container.innerHTML = `<div class="empty-state">
+                    <div class="emoji">🤔</div>
+                    <p>No exercises found. Try completing your profile and regenerating.</p>
+                </div>`;
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'day-grid';
+
+            plan.days.forEach((day, idx) => {
+                const card = document.createElement('div');
+                card.className = 'day-card';
+                card.innerHTML = `
+                    <div class="day-card-header">
+                        <div class="day-title">
+                            <span class="day-badge">Day ${idx + 1}</span>
+                            <span class="day-name">${day.dayLabel}</span>
+                        </div>
+                        <span class="day-toggle">▾</span>
+                    </div>
+                    <div class="day-body">
+                        ${day.exercises.length === 0
+                            ? '<p style="color:var(--text-muted);font-size:0.88rem">No exercises available for this day.</p>'
+                            : day.exercises.map(ex => exerciseCardHTML(ex)).join('')
+                        }
+                    </div>
+                `;
+
+                // Open first day by default
+                if (idx === 0) card.classList.add('open');
+
+                // Attach toggle listener
+                card.querySelector('.day-card-header').addEventListener('click', function () {
+                    card.classList.toggle('open');
+                });
+
+                grid.appendChild(card);
+            });
+
+            container.appendChild(grid);
+        }
+
+        function exerciseCardHTML(ex) {
+            return `
+                <div class="exercise-card">
+                    <div class="exercise-info">
+                        <div class="exercise-name">${ex.name}</div>
+                        <div class="exercise-meta">
+                            <span class="tag green">${ex.target || ''}</span>
+                            <span class="tag">${ex.bodyPart || ''}</span>
+                            <span class="tag">${ex.equipment || ''}</span>
+                        </div>
+                        <div class="prescription">
+                            <span>${ex.sets}</span> sets × <span>${ex.reps}</span> reps
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ── Save plan ─────────────────────────────────────────────────────────
+        async function savePlan() {
+            if (!currentPlan) return;
+            const btn    = document.getElementById('saveBtn');
+            const status = document.getElementById('saveStatus');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API}/api/plan/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':  'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        plan_name: currentPlan.plan_name,
+                        plan_data: currentPlan
+                    })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    status.textContent = data.message;
+                    status.className = 'status-msg error';
+                    btn.disabled = false;
+                    return;
+                }
+
+                status.textContent = '✓ Plan saved!';
+                status.className = 'status-msg success';
+                loadHistory();
+
+            } catch {
+                status.textContent = 'Could not save. Is the server running?';
+                status.className = 'status-msg error';
+                btn.disabled = false;
+            }
+        }
+
+        // ── History ───────────────────────────────────────────────────────────
+        async function loadHistory() {
+            const list = document.getElementById('historyList');
+            try {
+                const res  = await fetch(`${API}/api/plan/history`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!res.ok || data.length === 0) {
+                    list.innerHTML = `<p style="color:var(--text-muted);font-size:0.88rem">No saved plans yet.</p>`;
+                    return;
+                }
+
+                list.innerHTML = `<div class="history-list">
+                    ${data.map(p => `
+                        <div class="history-item">
+                            <div>
+                                <strong>${p.plan_name}</strong>
+                                <br>
+                                <span>${new Date(p.created_at).toLocaleDateString('en-GB', {
+                                    day: 'numeric', month: 'short', year: 'numeric'
+                                })}</span>
+                            </div>
+                            <button class="btn-load" data-plan-id="${p.id}">Load</button>
+                        </div>
+                    `).join('')}
+                </div>`;
+
+                list.querySelectorAll('.btn-load').forEach(btn => {
+                    btn.addEventListener('click', () => loadSavedPlan(btn.dataset.planId));
+                });
+
+            } catch {
+                list.innerHTML = `<p style="color:var(--text-muted);font-size:0.88rem">Could not load history.</p>`;
+            }
+        }
+
+        async function loadSavedPlan(id) {
+            try {
+                const res  = await fetch(`${API}/api/plan/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) return;
+
+                currentPlan = data.plan_data;
+                renderPlan(data.plan_data);
+                document.getElementById('planSubtitle').textContent =
+                    `${data.plan_name} — saved on ${new Date(data.created_at).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}`;
+                document.getElementById('saveStrip').style.display = 'none';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            } catch {
+                // silent fail
+            }
+        }
+
+        // ── Init ─────────────────
+        // ── Init ──────────────────────────────────────────────────────────────
+        loadHistory();
+    </script>
+
+</body>
+</html>
