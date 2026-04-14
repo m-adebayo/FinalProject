@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard – AllThingsFitness</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
+        <ul class="nav-links">
+            <li><a href="workout.html">Workouts</a></li>
+            <li><a href="#">Food</a></li>
+            <li><a href="#">Chatbots</a></li>
+        </ul>
+        <a href="#" class="nav-avatar" id="avatarBtn">?</a>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-wrapper">
+        <div class="dashboard-greeting">
+            <h1>Hello, <span id="greetingName">there</span> </h1>
+        </div>
+        <div class="dashboard-grid">
+
+            <!-- Left side content: Todays Activity -->
+            <div class="activity-card">
+                <h2>Your Saved Workout</h2>
+
+                <!-- Workout summary -->
+                <div class="workout-summary" id="workoutSummary">
+                    <div class="nutrition-loading">Loading workout…</div>
+                </div>
+
+            </div>
+
+            <!-- Right side conten: Quotes and Nutrition -->
+            <div class="right-col">
+
+                <!-- Motivational quote -->
+                <p class="quote-block" id="quoteBlock"></p>
+
+                <!-- Personalised nutrition card -->
+                <div class="nutrition-card">
+                    <h3>Your Daily Targets</h3>
+                    <div id="nutritionContent">
+                        <div class="nutrition-loading">Loading nutrition data…</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quotes 
+        const quotes = [
+            { text: '"We are what we repeatedly do. Excellence is not an act, but a habit."', author: 'Aristotle' },
+            { text: '"The body achieves what the mind believes."', author: 'Napoleon Hill' },
+            { text: '"Take care of your body. It\'s the only place you have to live."', author: 'Jim Rohn' },
+            { text: '"Push yourself because no one else is going to do it for you."', author: 'Deb Soefield' },
+            { text: '"Success is usually the culmination of controlling failure."', author: 'Sylvester Stallone' }
+        ];
+
+        const q = quotes[Math.floor(Math.random() * quotes.length)];
+        document.getElementById('quoteBlock').innerHTML =
+            `${q.text} <span>– ${q.author}</span>`;
+
+        // Auth setup 
+        const token = localStorage.getItem('token');
+        const user  = JSON.parse(localStorage.getItem('user') || 'null');
+
+        const avatarBtn = document.getElementById('avatarBtn');
+        if (user && user.first_name) {
+            avatarBtn.textContent = user.first_name[0].toUpperCase();
+            document.getElementById('greetingName').textContent = user.first_name;
+            document.querySelector('.nav-logo').href = 'dashboard.html';
+        }
+
+        // Redirect if not logged in
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // Fetch nutrition data 
+        async function loadNutrition() {
+            const el = document.getElementById('nutritionContent');
+            try {
+                const res = await fetch('http://localhost:5000/api/dashboard/nutrition', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    el.innerHTML = `<p class="no-plan-msg">${data.message} <a href="profile.html">Complete profile →</a></p>`;
+                    return;
+                }
+
+                const { dailyCalories, macros } = data;
+
+                el.innerHTML = `
+                    <div class="calorie-display">
+                        <span class="calorie-number">${dailyCalories.toLocaleString()}</span>
+                        <span class="calorie-unit">kcal / day</span>
+                    </div>
+
+                    <div class="macros-row">
+                        <div class="macro-pill protein">
+                            <div class="macro-grams">${macros.protein}<span>g</span></div>
+                            <div class="macro-label">Protein</div>
+                        </div>
+                        <div class="macro-pill carbs">
+                            <div class="macro-grams">${macros.carbs}<span>g</span></div>
+                            <div class="macro-label">Carbs</div>
+                        </div>
+                        <div class="macro-pill fat">
+                            <div class="macro-grams">${macros.fat}<span>g</span></div>
+                            <div class="macro-label">Fat</div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                el.innerHTML = `<p class="no-plan-msg" style="color:#f87171;">Could not load nutrition data.</p>`;
+            }
+        }
+
+        // Fetch latest workout plan 
+        async function loadWorkout() {
+            const el = document.getElementById('workoutSummary');
+            try {
+                // Get the most recent saved plan
+                const histRes = await fetch('http://localhost:5000/api/plan/history', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const history = await histRes.json();
+
+                if (!histRes.ok || !history.length) {
+                    el.innerHTML = `
+                        <p class="workout-label">Today's Workout</p>
+                        <p class="no-plan-msg">No plan saved yet. <a href="workout.html">Generate one →</a></p>`;
+                    return;
+                }
+
+                // Fetch the full plan
+                const latestId = history[0].id;
+                const planRes  = await fetch(`http://localhost:5000/api/plan/${latestId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const plan = await planRes.json();
+
+                // Pick today's day by day-of-week index (wraps around plan length)
+                const days      = plan.plan_data?.days || [];
+                const dayIndex  = new Date().getDay() % days.length;
+                const today     = days[dayIndex] || days[0];
+
+                if (!today) {
+                    el.innerHTML = `<p class="no-plan-msg">Plan data unavailable. <a href="workout.html">View workouts →</a></p>`;
+                    return;
+                }
+
+                // Show first 4 exercises by name
+                const preview = today.exercises.slice(0, 4);
+                const listItems = preview.map(e =>
+                    `<li>${e.name.charAt(0).toUpperCase() + e.name.slice(1)}</li>`
+                ).join('');
+
+                el.innerHTML = `
+                    <p class="workout-label">Today's Workout</p>
+                    <p class="workout-name">${today.dayLabel}</p>
+                    <ul class="exercise-list">${listItems}</ul>
+                    <a href="workout.html" class="btn-view-workout">View Full Workout</a>`;
+
+            } catch (err) {
+                el.innerHTML = `
+                    <p class="workout-label">Today's Workout</p>
+                    <p class="no-plan-msg">Could not load workout. <a href="workout.html">Go to workouts →</a></p>`;
+            }
+        }
+
+        //Init
+        loadNutrition();
+        loadWorkout();
+    </script>
+</body>
+</html>

@@ -21,7 +21,7 @@
         <a href="login.html" class="nav-avatar" id="avatarBtn">?</a>
     </nav>
 
-    <!-- ── HERO ──────────────────────── -->
+    <!--HERO-->
     <section class="hero">
 
         <!-- Text content -->
@@ -41,6 +41,7 @@
         const getStartedBtn = document.getElementById('getStartedBtn');
 
         if (user && user.first_name && token) {
+            document.querySelector('.nav-logo').href = 'dashboard.html';
             avatarBtn.textContent = user.first_name[0].toUpperCase();
             avatarBtn.href = 'dashboard.html';
 

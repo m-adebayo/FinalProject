@@ -4,7 +4,7 @@ const https   = require('https');
 const db      = require('../db');
 const jwt     = require('jsonwebtoken');
 
-// ── Auth helper ───────────────────────────────────────────────────────────────
+//Auth helper
 function getUser(req, res) {
     const token = (req.headers['authorization'] || '').split(' ')[1];
     if (!token) {
@@ -19,7 +19,7 @@ function getUser(req, res) {
     }
 }
 
-// ── ExerciseDB helper ─────────────────────────────────────────────────────────
+// ExerciseDB helper 
 function fetchExercisesByBodyPart(bodyPart, limit = 20) {
     return new Promise((resolve, reject) => {
         const encoded = encodeURIComponent(bodyPart);
@@ -154,7 +154,7 @@ function shuffle(arr) {
     return arr;
 }
 
-// ── GET /api/plan/generate ────────────────────────────────────────────────────
+//  GET /api/plan/generate
 router.get('/generate', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
@@ -269,7 +269,7 @@ router.get('/generate', async (req, res) => {
     }
 });
 
-// ── POST /api/plan/save ───────────────────────────────────────────────────────
+//POST /api/plan/save
 router.post('/save', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
@@ -291,7 +291,7 @@ router.post('/save', async (req, res) => {
     }
 });
 
-// ── GET /api/plan/history ─────────────────────────────────────────────────────
+//GET /api/plan/history
 router.get('/history', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
@@ -308,7 +308,7 @@ router.get('/history', async (req, res) => {
     }
 });
 
-// ── GET /api/plan/:id ─────────────────────────────────────────────────────────
+//GET /api/plan/:id 
 router.get('/:id', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;

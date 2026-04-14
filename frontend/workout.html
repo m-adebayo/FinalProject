@@ -73,7 +73,10 @@
 
         // Avatar initial
         const avatarBtn = document.getElementById('avatarBtn');
-        if (user && user.first_name) avatarBtn.textContent = user.first_name[0].toUpperCase();
+        if (user && user.first_name) {
+            avatarBtn.textContent = user.first_name[0].toUpperCase();
+            document.querySelector('.nav-logo').href = 'dashboard.html';
+        }
 
         // ── Wire up buttons ───────────────────────────────────────────────────
         document.getElementById('generateBtn').addEventListener('click', generatePlan);

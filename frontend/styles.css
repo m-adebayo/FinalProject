@@ -626,6 +626,254 @@ button[type="submit"]:hover {
 
 .incomplete-banner a { color: #f87171; font-weight: 700; }
 
+/* ── DASHBOARD PAGE ─────────────────── */
+.dashboard-greeting {
+    position: relative;
+    z-index: 2;
+    text-align: left;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 1000px;
+}
+
+.dashboard-greeting h1 {
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--text);
+}
+
+.dashboard-greeting h1 span {
+    color: var(--green);
+}
+
+.dashboard-wrapper {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('images/silhouette.png') center/contain no-repeat;
+    opacity: 0.07;
+    pointer-events: none;
+}
+
+.dashboard-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    width: 100%;
+    max-width: 1000px;
+    align-items: start;
+}
+
+.activity-card {
+    background: rgba(20, 35, 20, 0.75);
+    border: 1px solid rgba(118, 255, 3, 0.25);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(6px);
+}
+
+.activity-card h2 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--green);
+    margin-bottom: 1.25rem;
+}
+
+.workout-summary {
+    margin-bottom: 1.25rem;
+}
+
+.workout-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.workout-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 0.75rem;
+}
+
+.exercise-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+}
+
+.exercise-list li {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.exercise-list li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+}
+
+.btn-view-workout {
+    display: inline-block;
+    padding: 0.55rem 1.4rem;
+    background: var(--green);
+    color: #0a1118;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.btn-view-workout:hover {
+    background: var(--green-hover);
+    transform: translateY(-1px);
+}
+
+.right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.quote-block {
+    font-style: italic;
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.6;
+    color: var(--text);
+    text-align: center;
+}
+
+.quote-block span {
+    color: var(--green);
+}
+
+.nutrition-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    backdrop-filter: blur(6px);
+}
+
+.nutrition-card h3 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+.calorie-display {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+
+.calorie-number {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--green);
+    line-height: 1;
+}
+
+.calorie-unit {
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.macros-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.macro-pill {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+}
+
+.macro-pill .macro-grams {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+}
+
+.macro-pill .macro-grams span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.macro-pill .macro-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.macro-pill.protein .macro-label { color: #60a5fa; }
+.macro-pill.carbs   .macro-label { color: #f59e0b; }
+.macro-pill.fat     .macro-label { color: #f87171; }
+.macro-pill.protein { border-color: rgba(96,165,250,0.3); }
+.macro-pill.carbs   { border-color: rgba(245,158,11,0.3); }
+.macro-pill.fat     { border-color: rgba(248,113,113,0.3); }
+
+.nutrition-loading {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 1rem 0;
+}
+
+.no-plan-msg {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0;
+}
+
+.no-plan-msg a {
+    color: var(--green);
+    font-weight: 700;
+    text-decoration: none;
+}
+
 /* ── DIVIDER ─────────────────────────── */
 .divider {
     display: flex;

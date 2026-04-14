@@ -60,6 +60,10 @@
     </div>
 
     <script>
+        if (localStorage.getItem('token') && JSON.parse(localStorage.getItem('user') || 'null')?.first_name) {
+            document.querySelector('.nav-logo').href = 'dashboard.html';
+        }
+
         const form = document.getElementById('signupForm');
         const errorMsg = document.getElementById('errorMsg');
 

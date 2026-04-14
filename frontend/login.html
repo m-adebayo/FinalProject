@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- ── NAV ───────────────────────── -->
+    <!-- NAV -->
     <nav>
         <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
 
@@ -21,7 +21,7 @@
         <a href="login.html" class="nav-avatar">?</a>
     </nav>
 
-    <!-- ── LOGIN FORM ────────────────── -->
+    <!-- LOGIN FORM -->
     <div class="auth-wrapper">
         <div class="auth-card">
             <h1>Welcome back</h1>
@@ -49,6 +49,10 @@
     </div>
 
     <script>
+        if (localStorage.getItem('token') && JSON.parse(localStorage.getItem('user') || 'null')?.first_name) {
+            document.querySelector('.nav-logo').href = 'dashboard.html';
+        }
+
         const form = document.getElementById('loginForm');
         const errorMsg = document.getElementById('errorMsg');
 
@@ -82,7 +86,7 @@
                 window.location.href = 'dashboard.html';
 
             } catch (err) {
-                errorMsg.textContent = 'Could not connect to the server. Is it running?';
+                errorMsg.textContent = 'Could not connect to the server.';
                 errorMsg.style.display = 'block';
             }
         });
