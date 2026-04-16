@@ -8,18 +8,18 @@
 </head>
 <body>
 
-    <!-- ── NAV ───────────────────────────────── -->
+    <!-- NAV -->
     <nav>
         <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
         <ul class="nav-links">
             <li><a href="workout.html">Workouts</a></li>
             <li><a href="#">Food</a></li>
-            <li><a href="#">Chatbots</a></li>
+            <li><a href="chatbots.html">Chatbots</a></li>
         </ul>
         <a href="login.html" class="nav-avatar" id="avatarBtn">?</a>
     </nav>
 
-    <!-- ── MAIN ─────────────────────────────── -->
+    <!-- MAIN -->
     <div class="plan-wrapper">
 
         <div id="incompleteBanner" class="incomplete-banner" style="display:none">
@@ -78,14 +78,14 @@
             document.querySelector('.nav-logo').href = 'dashboard.html';
         }
 
-        // ── Wire up buttons ───────────────────────────────────────────────────
+        //  Wire up buttons 
         document.getElementById('generateBtn').addEventListener('click', generatePlan);
         document.getElementById('saveBtn').addEventListener('click', savePlan);
 
-        // ── Saved plan state ──────────────────────────────────────────────────
+        //  Saved plan state 
         let currentPlan = null;
 
-        // ── Generate plan ─────────────────────────────────────────────────────
+        //  Generate plan 
         async function generatePlan() {
             const btn     = document.getElementById('generateBtn');
             const spinner = document.getElementById('spinner');
@@ -132,7 +132,7 @@
             }
         }
 
-        // ── Render plan ────────────────────────────────────────────────────────
+        // Render plan 
         function renderPlan(plan) {
             const container = document.getElementById('planContainer');
             container.innerHTML = '';
@@ -199,7 +199,7 @@
             `;
         }
 
-        // ── Save plan ─────────────────────────────────────────────────────────
+        // Save plan
         async function savePlan() {
             if (!currentPlan) return;
             const btn    = document.getElementById('saveBtn');
@@ -238,7 +238,7 @@
             }
         }
 
-        // ── History ───────────────────────────────────────────────────────────
+        //  History 
         async function loadHistory() {
             const list = document.getElementById('historyList');
             try {
@@ -296,8 +296,8 @@
             }
         }
 
-        // ── Init ─────────────────
-        // ── Init ──────────────────────────────────────────────────────────────
+        //  Init 
+        //  Init 
         loadHistory();
     </script>
 

@@ -8,20 +8,20 @@
 </head>
 <body>
 
-    <!-- ── NAV ───────────────────────── -->
+    <!-- NAV -->
     <nav>
         <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
 
         <ul class="nav-links">
             <li><a href="workout.html">Workouts</a></li>
             <li><a href="#">Food</a></li>
-            <li><a href="#">Chatbots</a></li>
+            <li><a href="chatbots.html">Chatbots</a></li>
         </ul>
 
         <a href="login.html" class="nav-avatar" id="avatarBtn">?</a>
     </nav>
 
-    <!-- ── PROFILE FORM ──────────────── -->
+    <!-- PROFILE FORM -->
     <div class="auth-wrapper">
         <div class="auth-card profile-card">
             <h1>Set up your profile</h1>
@@ -130,7 +130,7 @@
             document.querySelector('.nav-logo').href = 'dashboard.html';
         }
 
-        // "None" checkbox clears all others in its group
+    // "None checkbox clears all others in its group
         function setupNoneCheckbox(noneId, groupSelector) {
             const noneBox = document.getElementById(noneId);
             const siblings = [...document.querySelectorAll(`${groupSelector} input[type="checkbox"]`)]

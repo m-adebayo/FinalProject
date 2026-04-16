@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbots – AllThingsFitness</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a href="dashboard.html" class="nav-logo">ALLTHINGSFITNESS</a>
+        <ul class="nav-links">
+            <li><a href="workout.html">Workouts</a></li>
+            <li><a href="#">Food</a></li>
+            <li><a href="chatbots.html">Chatbots</a></li>
+        </ul>
+        <a href="#" class="nav-avatar" id="avatarBtn">?</a>
+    </nav>
+
+    <!-- PAGE HEADER -->
+    <div class="chatbots-header">
+        <h1>Your AI <span>Assistants</span></h1>
+        <p>Chat with Freida for fitness advice, or Nardo for nutrition tips.</p>
+    </div>
+
+    <!-- TWO-BOT LAYOUT -->
+    <div class="chatbots-wrapper">
+
+        <!-- LEFT: FREIDA -->
+        <div class="chat-panel" id="panel-freida">
+            <div class="chat-panel-head freida-head">
+                <div class="bot-avatar freida-avatar">🏋️</div>
+                <div class="bot-info">
+                    <h2>Freida</h2>
+                    <span class="bot-tag">Fitness Coach</span>
+                </div>
+                <div class="bot-status">
+                    <span class="status-dot"></span> Online
+                </div>
+            </div>
+
+            <div class="chat-messages" id="messages-freida">
+                <div class="chat-bubble bot-bubble">
+                    Hey! I'm Freida, your personal fitness coach 💪 Ask me anything about workouts, exercise form, or how to hit your goals!
+                </div>
+            </div>
+
+            <div class="chat-input-row">
+                <input
+                    type="text"
+                    id="input-freida"
+                    class="chat-input"
+                    placeholder="Ask Freida about workouts..."
+                    autocomplete="off"
+                />
+                <button class="chat-send-btn" onclick="sendMessage('freida')" id="btn-freida">
+                    <span class="send-icon">➤</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- DIVIDER -->
+        <div class="bots-divider"></div>
+
+        <!-- RIGHT: NARDO -->
+        <div class="chat-panel" id="panel-nardo">
+            <div class="chat-panel-head nardo-head">
+                <div class="bot-avatar nardo-avatar">🥗</div>
+                <div class="bot-info">
+                    <h2>Nardo</h2>
+                    <span class="bot-tag">Nutritionist</span>
+                </div>
+                <div class="bot-status">
+                    <span class="status-dot"></span> Online
+                </div>
+            </div>
+
+            <div class="chat-messages" id="messages-nardo">
+                <div class="chat-bubble bot-bubble">
+                    Hey there! I'm Nardo, your nutrition guide 🥗 Got questions about macros, meal plans, or what to eat for your goals? I'm here!
+                </div>
+            </div>
+
+            <div class="chat-input-row">
+                <input
+                    type="text"
+                    id="input-nardo"
+                    class="chat-input"
+                    placeholder="Ask Nardo about nutrition..."
+                    autocomplete="off"
+                />
+                <button class="chat-send-btn" onclick="sendMessage('nardo')" id="btn-nardo">
+                    <span class="send-icon">➤</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Auth
+        const token = localStorage.getItem('token');
+        const user  = JSON.parse(localStorage.getItem('user') || 'null');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        const avatarBtn = document.getElementById('avatarBtn');
+        if (user && user.first_name) {
+            avatarBtn.textContent = user.first_name[0].toUpperCase();
+        }
+
+        // Keep a conversation history per bot
+        const history = {
+            freida: [],
+            nardo:  []
+        };
+
+        // User context to pass to the backend
+        const userContext = user ? {
+            first_name:    user.first_name,
+            fitness_level: user.fitness_level,
+            goal:          user.goal
+        } : {};
+
+        async function sendMessage(bot) {
+            const input   = document.getElementById(`input-${bot}`);
+            const btn     = document.getElementById(`btn-${bot}`);
+            const msgText = input.value.trim();
+            if (!msgText) return;
+
+            // Append user bubble
+            appendBubble(bot, msgText, 'user');
+            history[bot].push({ role: 'user', content: msgText });
+            input.value = '';
+            btn.disabled = true;
+
+            // Typing indicator
+            const typingId = appendTyping(bot);
+
+            try {
+                const res = await fetch('http://localhost:5000/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        bot,
+                        messages: history[bot],
+                        userContext
+                    })
+                });
+
+                const data = await res.json();
+                removeTyping(bot, typingId);
+
+                if (!res.ok || data.error) {
+                    appendBubble(bot, data.error || 'Something went wrong. Try again!', 'error');
+                } else {
+                    appendBubble(bot, data.reply, 'bot');
+                    history[bot].push({ role: 'assistant', content: data.reply });
+                }
+
+            } catch (err) {
+                removeTyping(bot, typingId);
+                appendBubble(bot, 'Could not reach the server. Make sure the backend is running!', 'error');
+            }
+
+            btn.disabled = false;
+            input.focus();
+        }
+
+        function appendBubble(bot, text, type) {
+            const container = document.getElementById(`messages-${bot}`);
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${type === 'user' ? 'user-bubble' : type === 'error' ? 'error-bubble' : 'bot-bubble'}`;
+            bubble.textContent = text;
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendTyping(bot) {
+            const container = document.getElementById(`messages-${bot}`);
+            const id = `typing-${bot}-${Date.now()}`;
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble bot-bubble typing-bubble';
+            bubble.id = id;
+            bubble.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
+        function removeTyping(bot, id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        // Send on Enter key
+        ['freida', 'nardo'].forEach(bot => {
+            document.getElementById(`input-${bot}`).addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') sendMessage(bot);
+            });
+        });
+    </script>
+</body>
+</html>
