@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Setup | AllThingsFitness</title>
+    <title>Update Profile | AllThingsFitness</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -18,14 +18,21 @@
             <li><a href="chatbots.html">Chatbots</a></li>
         </ul>
 
-        <a href="login.html" class="nav-avatar" id="avatarBtn">?</a>
+        <div class="nav-avatar-wrap">
+            <a href="#" class="nav-avatar" id="avatarBtn">?</a>
+            <div class="avatar-dropdown" id="avatarDropdown">
+                <a href="profile.html" class="dropdown-item">Update Profile</a>
+                <button class="dropdown-item dropdown-help" id="helpBtn">Help</button>
+                <button class="dropdown-item dropdown-logout" id="logoutBtn">Log Out</button>
+            </div>
+        </div>
     </nav>
 
     <!-- PROFILE FORM -->
     <div class="auth-wrapper">
         <div class="auth-card profile-card">
-            <h1>Set up your profile</h1>
-            <p class="subtitle">Tell us about yourself so we can personalise your experience.</p>
+            <h1>Update your profile</h1>
+            <p class="subtitle">Keep your details up to date so we can personalise your experience.</p>
 
             <form id="profileForm">
 
@@ -108,8 +115,9 @@
                     </div>
                 </div>
 
-                <button type="submit">Save Profile</button>
+                <button type="submit">Save Changes</button>
                 <p class="error" id="errorMsg"></p>
+                <p id="successMsg" style="display:none; color: var(--green); font-size: 0.88rem; margin-top: 0.75rem;">Profile updated successfully!</p>
             </form>
         </div>
     </div>
@@ -130,7 +138,7 @@
             document.querySelector('.nav-logo').href = 'dashboard.html';
         }
 
-    // "None checkbox clears all others in its group
+        // "None" checkbox clears all others in its group
         function setupNoneCheckbox(noneId, groupSelector) {
             const noneBox = document.getElementById(noneId);
             const siblings = [...document.querySelectorAll(`${groupSelector} input[type="checkbox"]`)]
@@ -156,13 +164,59 @@
                     .filter(v => v !== 'none');
         }
 
-        // Form submit
-        const form     = document.getElementById('profileForm');
-        const errorMsg = document.getElementById('errorMsg');
+        // Pre-fill the form with existing profile data
+        async function loadProfile() {
+            try {
+                const res = await fetch('http://localhost:5000/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) return; // No profile yet — form stays blank
+
+                const data = await res.json();
+
+                if (data.gender)        document.getElementById('gender').value = data.gender;
+                if (data.age)           document.getElementById('age').value = data.age;
+                if (data.height)        document.getElementById('height').value = data.height;
+                if (data.weight)        document.getElementById('weight').value = data.weight;
+                if (data.fitness_level) document.getElementById('fitness_level').value = data.fitness_level;
+                if (data.goal)          document.getElementById('goal').value = data.goal;
+
+                // Tick dietary preferences
+                if (Array.isArray(data.dietary_preferences) && data.dietary_preferences.length > 0) {
+                    const tagGroups = document.querySelectorAll('.tag-group');
+                    tagGroups[0].querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        if (data.dietary_preferences.includes(cb.value)) cb.checked = true;
+                    });
+                } else {
+                    document.getElementById('dietNone').checked = true;
+                }
+
+                // Tick medical flags
+                if (Array.isArray(data.medical_flags) && data.medical_flags.length > 0) {
+                    const tagGroups = document.querySelectorAll('.tag-group');
+                    tagGroups[1].querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        if (data.medical_flags.includes(cb.value)) cb.checked = true;
+                    });
+                } else {
+                    document.getElementById('medNone').checked = true;
+                }
+
+            } catch (err) {
+                // Silently fail — user can still fill form manually
+            }
+        }
+
+        loadProfile();
+
+        // Form submit — UPDATE the profile in the DB
+        const form       = document.getElementById('profileForm');
+        const errorMsg   = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            errorMsg.style.display = 'none';
+            errorMsg.style.display  = 'none';
+            successMsg.style.display = 'none';
 
             const tagGroups = document.querySelectorAll('.tag-group');
 
@@ -196,14 +250,101 @@
                 }
 
                 localStorage.setItem('profileComplete', 'true');
-                window.location.href = 'dashboard.html';
+                successMsg.style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
 
             } catch (err) {
                 errorMsg.textContent = 'Could not connect to the server. Is it running?';
                 errorMsg.style.display = 'block';
             }
         });
+
+        // Avatar dropdown
+        document.getElementById('avatarBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('avatarDropdown').classList.toggle('open');
+        });
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-avatar-wrap')) {
+                document.getElementById('avatarDropdown').classList.remove('open');
+            }
+        });
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+
+        // Help modal
+        document.getElementById('helpBtn').addEventListener('click', function() {
+            document.getElementById('avatarDropdown').classList.remove('open');
+            document.getElementById('helpModal').classList.add('open');
+        });
+        document.getElementById('helpClose').addEventListener('click', function() {
+            document.getElementById('helpModal').classList.remove('open');
+        });
+        document.getElementById('helpModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('open');
+        });
     </script>
 
+
+    <!-- HELP MODAL -->
+    <div class="help-modal-overlay" id="helpModal">
+        <div class="help-modal">
+            <button class="help-close" id="helpClose">&#x2715;</button>
+            <h2>How to use <span>AllThingsFitness</span></h2>
+            <p class="help-subtitle">Here's a quick guide to get the most out of the app.</p>
+
+            <div class="help-step">
+                <div class="help-step-num">1</div>
+                <div class="help-step-body">
+                    <h3>Set up your profile</h3>
+                    <p>Head to <a href="profile.html">Update Profile</a> and fill in your age, weight, height, fitness level, and goal. This lets the app personalise everything for you.</p>
+                </div>
+            </div>
+
+            <div class="help-divider"></div>
+
+            <div class="help-step">
+                <div class="help-step-num">2</div>
+                <div class="help-step-body">
+                    <h3>Generate a workout plan</h3>
+                    <p>Go to <a href="workout.html">Workouts</a> and hit <strong>Generate Plan</strong>. The app will build a personalised multi-day plan based on your profile. Save it to keep it on your dashboard.</p>
+                </div>
+            </div>
+
+            <div class="help-divider"></div>
+
+            <div class="help-step">
+                <div class="help-step-num">3</div>
+                <div class="help-step-body">
+                    <h3>Check your dashboard</h3>
+                    <p>Your <a href="dashboard.html">Dashboard</a> shows today's workout from your saved plan and your daily calorie and macro targets — all calculated from your profile.</p>
+                </div>
+            </div>
+
+            <div class="help-divider"></div>
+
+            <div class="help-step">
+                <div class="help-step-num">4</div>
+                <div class="help-step-body">
+                    <h3>Chat with your AI assistants</h3>
+                    <p>Visit <a href="chatbots.html">Chatbots</a> to chat with <strong>Freida</strong> for fitness advice or <strong>Nardo</strong> for nutrition tips. Ask them anything!</p>
+                </div>
+            </div>
+
+            <div class="help-divider"></div>
+
+            <div class="help-step">
+                <div class="help-step-num">5</div>
+                <div class="help-step-body">
+                    <h3>Keep your info up to date</h3>
+                    <p>Changed your weight or goal? Use <a href="profile.html">Update Profile</a> from the avatar menu at any time — your nutrition targets will update automatically.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
+     
