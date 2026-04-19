@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food – AllThingsFitness</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a href="index.html" class="nav-logo">ALLTHINGSFITNESS</a>
+        <ul class="nav-links">
+            <li><a href="workout.html">Workouts</a></li>
+            <li><a href="food.html">Food</a></li>
+            <li><a href="chatbots.html">Chatbots</a></li>
+        </ul>
+        <div class="nav-avatar-wrap">
+            <a href="#" class="nav-avatar" id="avatarBtn">?</a>
+            <div class="avatar-dropdown" id="avatarDropdown">
+                <a href="profile.html" class="dropdown-item">Update Profile</a>
+                <button class="dropdown-item dropdown-help" id="helpBtn">Help</button>
+                <button class="dropdown-item dropdown-logout" id="logoutBtn">Log Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- FOOD PAGE -->
+    <div class="food-wrapper">
+        <div class="food-header">
+            <h1>Grocery <span>List</span></h1>
+            <p>Pick your goal to generate a shopping list tailored to it. Print it, copy it, or tick items off as you shop.</p>
+        </div>
+
+        <!-- Goal selector -->
+        <div class="goal-picker" id="goalPicker">
+            <button class="goal-btn" data-goal="lose_weight">Lose Weight</button>
+            <button class="goal-btn" data-goal="build_muscle">Build Muscle</button>
+            <button class="goal-btn" data-goal="maintain">Maintain</button>
+            <button class="goal-btn" data-goal="endurance">Endurance</button>
+        </div>
+
+        <!-- Action bar -->
+        <div class="food-actions no-print">
+            <button class="btn-food-action" id="printBtn">🖨 Print</button>
+        </div>
+
+        <!-- Result area -->
+        <div class="grocery-container" id="groceryContainer">
+            <p class="grocery-empty">Select a goal above to see your list.</p>
+        </div>
+    </div>
+
+    <script>
+        // Auth setup
+        const token = localStorage.getItem('token');
+        const user  = JSON.parse(localStorage.getItem('user') || 'null');
+
+        const avatarBtn = document.getElementById('avatarBtn');
+        if (user && user.first_name) {
+            avatarBtn.textContent = user.first_name[0].toUpperCase();
+            document.querySelector('.nav-logo').href = 'dashboard.html';
+        }
+
+        // Redirect if not logged in
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // Grocery lists per goal
+        const GROCERY_LISTS = {
+            lose_weight: {
+                label: 'Lose Weight',
+                blurb: 'High-protein, high-fibre picks that keep you full on fewer calories.',
+                sections: [
+                    { name: 'Proteins', items: ['Chicken breast', 'Turkey mince (5% fat)', 'White fish (cod / haddock)', 'Tinned tuna in spring water', 'Egg whites', 'Low-fat Greek yoghurt', 'Cottage cheese'] },
+                    { name: 'Carbs', items: ['Rolled oats', 'Sweet potato', 'Brown rice', 'Wholegrain wraps'] },
+                    { name: 'Veg & Fruit', items: ['Spinach', 'Broccoli', 'Courgette', 'Cucumber', 'Bell peppers', 'Berries (frozen)', 'Apples'] },
+                    { name: 'Fats', items: ['Avocado', 'Almonds (30g portion bags)', 'Olive oil spray'] },
+                    { name: 'Pantry', items: ['Mustard', 'Hot sauce', 'Low-cal salad dressing', 'Herbal tea'] }
+                ]
+            },
+            build_muscle: {
+                label: 'Build Muscle',
+                blurb: 'Protein-dense staples plus quality carbs to fuel training and recovery.',
+                sections: [
+                    { name: 'Proteins', items: ['Chicken thighs', 'Lean beef mince (10% fat)', 'Salmon fillets', 'Whole eggs (dozen)', 'Whey protein powder', 'Greek yoghurt (full fat)', 'Cheddar cheese'] },
+                    { name: 'Carbs', items: ['White rice', 'Pasta', 'Bagels', 'Potatoes', 'Rolled oats', 'Wholemeal bread'] },
+                    { name: 'Veg & Fruit', items: ['Bananas', 'Mixed berries', 'Broccoli', 'Carrots', 'Onions', 'Garlic'] },
+                    { name: 'Fats', items: ['Peanut butter', 'Olive oil', 'Walnuts', 'Dark chocolate (70%)'] },
+                    { name: 'Pantry', items: ['Soy sauce', 'Honey', 'Mixed spices', 'Milk (semi-skimmed, 2L)'] }
+                ]
+            },
+            maintain: {
+                label: 'Maintain',
+                blurb: 'A balanced mix — enough protein to hold muscle, mixed carbs, plenty of veg.',
+                sections: [
+                    { name: 'Proteins', items: ['Chicken breast', 'Lean beef mince', 'Salmon or white fish', 'Eggs (half dozen)', 'Greek yoghurt', 'Tinned chickpeas', 'Tofu'] },
+                    { name: 'Carbs', items: ['Brown rice', 'Wholemeal pasta', 'Sourdough bread', 'Sweet potato', 'Oats'] },
+                    { name: 'Veg & Fruit', items: ['Mixed salad leaves', 'Tomatoes', 'Cucumber', 'Broccoli', 'Bananas', 'Apples', 'Oranges'] },
+                    { name: 'Fats', items: ['Olive oil', 'Avocado', 'Mixed nuts', 'Feta cheese'] },
+                    { name: 'Pantry', items: ['Balsamic vinegar', 'Tinned tomatoes', 'Garlic', 'Dried herbs', 'Tea / coffee'] }
+                ]
+            },
+            endurance: {
+                label: 'Endurance',
+                blurb: 'Carb-forward list for long sessions, with electrolytes and easy-to-digest snacks.',
+                sections: [
+                    { name: 'Proteins', items: ['Chicken breast', 'Eggs', 'Greek yoghurt', 'Tinned tuna', 'Cottage cheese'] },
+                    { name: 'Carbs', items: ['Rolled oats', 'White rice', 'Pasta', 'Bagels', 'Bananas (bunch)', 'Medjool dates', 'Porridge pots'] },
+                    { name: 'Veg & Fruit', items: ['Beetroot', 'Spinach', 'Sweet potato', 'Oranges', 'Berries', 'Dried apricots'] },
+                    { name: 'Fats', items: ['Peanut butter', 'Almonds', 'Olive oil'] },
+                    { name: 'Pantry', items: ['Electrolyte tablets', 'Honey', 'Energy gels / bars', 'Coconut water'] }
+                ]
+            }
+        };
+
+        const GOAL_LABELS = {
+            lose_weight: 'Lose Weight',
+            build_muscle: 'Build Muscle',
+            maintain: 'Maintain',
+            endurance: 'Endurance'
+        };
+
+        let currentGoal = null;
+
+        // Render list for a given goal
+        function renderList(goal) {
+            currentGoal = goal;
+            const data = GROCERY_LISTS[goal];
+            const container = document.getElementById('groceryContainer');
+
+            // Highlight active button
+            document.querySelectorAll('.goal-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.goal === goal);
+            });
+
+            if (!data) {
+                container.innerHTML = `<p class="grocery-empty">Select a goal above to see your list.</p>`;
+                return;
+            }
+
+            const sectionsHtml = data.sections.map(section => `
+                <div class="grocery-section">
+                    <h3>${section.name}</h3>
+                    <ul class="grocery-list">
+                        ${section.items.map((item, i) => `
+                            <li>
+                                <label class="grocery-item">
+                                    <input type="checkbox" data-item="${item.replace(/"/g, '&quot;')}">
+                                    <span>${item}</span>
+                                </label>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="grocery-header">
+                    <div>
+                        <h2>${data.label} Shopping List</h2>
+                        <p class="grocery-blurb">${data.blurb}</p>
+                    </div>
+                </div>
+                <div class="grocery-sections">
+                    ${sectionsHtml}
+                </div>
+            `;
+        }
+
+        // Goal button listeners
+        document.querySelectorAll('.goal-btn').forEach(btn => {
+            btn.addEventListener('click', () => renderList(btn.dataset.goal));
+        });
+
+        // Print
+        document.getElementById('printBtn').addEventListener('click', () => {
+            if (!currentGoal) {
+                alert('Pick a goal first.');
+                return;
+            }
+            window.print();
+        });
+
+        // Auto-select the user's goal from their profile
+        async function loadUserGoal() {
+            try {
+                const res = await fetch('http://localhost:5000/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok && data.goal && GROCERY_LISTS[data.goal]) {
+                    renderList(data.goal);
+                }
+            } catch (err) {
+                // Silent fail — user can still pick manually
+            }
+        }
+
+        // Avatar dropdown
+        document.getElementById('avatarBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('avatarDropdown').classList.toggle('open');
+        });
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-avatar-wrap')) {
+                document.getElementById('avatarDropdown').classList.remove('open');
+            }
+        });
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = 'login.html';
+        });
+
+        // Help modal
+        document.getElementById('helpBtn').addEventListener('click', function() {
+            document.getElementById('avatarDropdown').classList.remove('open');
+            document.getElementById('helpModal').classList.add('open');
+        });
+        document.getElementById('helpClose').addEventListener('click', function() {
+            document.getElementById('helpModal').classList.remove('open');
+        });
+        document.getElementById('helpModal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('open');
+        });
+
+        // Init
+        loadUserGoal();
+    </script>
+
+    <!-- HELP MODAL -->
+    <div class="help-modal-overlay" id="helpModal">
+        <div class="help-modal">
+            <button class="help-close" id="helpClose">&#x2715;</button>
+            <h2>How the <span>Food page</span> works</h2>
+            <p class="help-subtitle">A quick shopping helper based on your goal.</p>
+
+            <div class="help-step">
+                <div class="help-step-num">1</div>
+                <div class="help-step-body">
+                    <h3>Pick a goal</h3>
+                    <p>We auto-select the goal saved in your <a href="profile.html">profile</a>, but you can browse any of the four lists.</p>
+                </div>
+            </div>
+
+            <div class="help-divider"></div>
+
+            <div class="help-step">
+                <div class="help-step-num">2</div>
+                <div class="help-step-body">
+                    <h3>Tick as you shop</h3>
+                    <p>Use the checkboxes to track what you've grabbed while you're at the shop.</p>
+                </div>
+            </div>
+
+            <div class="help-divider"></div>
+
+            <div class="help-step">
+                <div class="help-step-num">3</div>
+                <div class="help-step-body">
+                    <h3>Print</h3>
+                    <p>Hit <strong>Print</strong> for a clean paper copy to take with you.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

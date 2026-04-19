@@ -1279,3 +1279,260 @@ button[type="submit"]:hover {
     background: var(--card-border);
     margin: 1.25rem 0;
 }
+
+/* =========================================
+   FOOD / GROCERY LIST PAGE
+   ========================================= */
+.food-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+}
+
+.food-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.food-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.food-header h1 span {
+    color: var(--green);
+}
+
+.food-header p {
+    color: var(--text-muted);
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+}
+
+.goal-picker {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.goal-btn {
+    padding: 0.7rem 1.4rem;
+    background: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.goal-btn:hover {
+    border-color: var(--green);
+    color: var(--green);
+}
+
+.goal-btn.active {
+    background: var(--green);
+    color: #0a1118;
+    border-color: var(--green);
+}
+
+.food-actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn-food-action {
+    padding: 0.55rem 1.1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.btn-food-action:hover {
+    border-color: var(--green);
+    color: var(--green);
+}
+
+.grocery-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2rem 2.25rem;
+    backdrop-filter: blur(6px);
+}
+
+.grocery-empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 0;
+    font-size: 0.95rem;
+}
+
+.grocery-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.3rem;
+}
+
+.grocery-blurb {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 1.75rem;
+}
+
+.grocery-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+
+.grocery-section h3 {
+    color: var(--green);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.grocery-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.grocery-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.2rem;
+    cursor: pointer;
+    font-size: 0.93rem;
+    color: var(--text);
+    transition: color var(--transition);
+}
+
+.grocery-item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--card-border);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: all var(--transition);
+}
+
+.grocery-item input[type="checkbox"]:hover {
+    border-color: var(--green);
+}
+
+.grocery-item input[type="checkbox"]:checked {
+    background: var(--green);
+    border-color: var(--green);
+}
+
+.grocery-item input[type="checkbox"]:checked::after {
+    content: '✓';
+    color: #0a1118;
+    font-weight: 900;
+    font-size: 13px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.grocery-item input[type="checkbox"]:checked + span {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.copy-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green);
+    color: #0a1118;
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 200;
+}
+
+.copy-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Print styles — clean black/white list on paper */
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+    nav,
+    .food-header p,
+    .goal-picker,
+    .food-actions,
+    .no-print,
+    .help-modal-overlay,
+    .nav-avatar-wrap {
+        display: none !important;
+    }
+    .food-wrapper {
+        padding: 0;
+    }
+    .food-header h1,
+    .food-header h1 span {
+        color: #000 !important;
+    }
+    .grocery-container {
+        background: #fff !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    .grocery-header h2 {
+        color: #000 !important;
+    }
+    .grocery-blurb {
+        color: #444 !important;
+    }
+    .grocery-section h3 {
+        color: #000 !important;
+        border-bottom: 1px solid #000;
+    }
+    .grocery-item {
+        color: #000 !important;
+    }
+    .grocery-item input[type="checkbox"] {
+        border-color: #000 !important;
+        background: #fff !important;
+    }
+    .grocery-sections {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
