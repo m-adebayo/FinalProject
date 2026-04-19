@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -13,15 +14,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/plan', planRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/chat', chatRoutes);
 
+// Serve the frontend — index.html (Get Started) is shown at "/"
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
+
 app.get('/', (req, res) => {
-    res.json({ message: 'AllThingsFitness API is running.' });
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
 const PORT = process.env.PORT || 5000;
