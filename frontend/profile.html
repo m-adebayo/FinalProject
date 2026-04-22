@@ -167,7 +167,7 @@
         // Pre-fill the form with existing profile data
         async function loadProfile() {
             try {
-                const res = await fetch('http://localhost:5000/api/profile', {
+                const res = await fetch('/api/profile', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) return; // No profile yet — form stays blank
@@ -232,7 +232,7 @@
             };
 
             try {
-                const response = await fetch('http://localhost:5000/api/profile/setup', {
+                const response = await fetch('/api/profile/setup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
