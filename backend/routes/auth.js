@@ -4,16 +4,36 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 
+// Simple email format check
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 router.post('/signup', async (req, res) => {
-    const { first_name, last_name, email, password } = req.body;
+    let { first_name, last_name, email, password } = req.body;
 
     // Basic validation
     if (!first_name || !last_name || !email || !password) {
         return res.status(400).json({ message: 'All fields are required.' });
     }
 
+    // Trim whitespace
+    first_name = String(first_name).trim();
+    last_name = String(last_name).trim();
+    email = String(email).trim().toLowerCase();
+
+    if (first_name.length < 1 || first_name.length > 50) {
+        return res.status(400).json({ message: 'First name must be between 1 and 50 characters.' });
+    }
+    if (last_name.length < 1 || last_name.length > 50) {
+        return res.status(400).json({ message: 'Last name must be between 1 and 50 characters.' });
+    }
+    if (!EMAIL_REGEX.test(email)) {
+        return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
     if (password.length < 6) {
         return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+    }
+    if (password.length > 100) {
+        return res.status(400).json({ message: 'Password is too long.' });
     }
 
     try {
@@ -55,10 +75,16 @@ router.post('/signup', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({ message: 'Email and password are required.' });
+    }
+
+    email = String(email).trim().toLowerCase();
+
+    if (!EMAIL_REGEX.test(email)) {
+        return res.status(400).json({ message: 'Please enter a valid email address.' });
     }
 
     try {

@@ -97,13 +97,28 @@ router.post('/setup', async (req, res) => {
         return res.status(400).json({ message: 'Invalid goal value.' });
     }
 
+    // Numeric range validation
+    const heightNum = Number(height);
+    const weightNum = Number(weight);
+    const ageNum = Number(age);
+
+    if (!Number.isFinite(heightNum) || heightNum < 50 || heightNum > 300) {
+        return res.status(400).json({ message: 'Height must be a number between 50 and 300 cm.' });
+    }
+    if (!Number.isFinite(weightNum) || weightNum < 20 || weightNum > 500) {
+        return res.status(400).json({ message: 'Weight must be a number between 20 and 500 kg.' });
+    }
+    if (!Number.isInteger(ageNum) || ageNum < 13 || ageNum > 120) {
+        return res.status(400).json({ message: 'Age must be a whole number between 13 and 120.' });
+    }
+
     try {
         // Update core fields on the users table
         await db.query(
             `UPDATE users
              SET gender = ?, height = ?, weight = ?, age = ?, fitness_level = ?, goal = ?
              WHERE id = ?`,
-            [gender, height, weight, age, fitness_level, goal, userId]
+            [gender, heightNum, weightNum, ageNum, fitness_level, goal, userId]
         );
 
         // Replace dietary preferences (delete old, insert new)

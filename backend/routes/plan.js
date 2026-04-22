@@ -278,6 +278,12 @@ router.post('/save', async (req, res) => {
     if (!plan_name || !plan_data) {
         return res.status(400).json({ message: 'plan_name and plan_data are required.' });
     }
+    if (typeof plan_name !== 'string' || plan_name.trim().length === 0 || plan_name.length > 100) {
+        return res.status(400).json({ message: 'plan_name must be a string between 1 and 100 characters.' });
+    }
+    if (typeof plan_data !== 'object') {
+        return res.status(400).json({ message: 'plan_data must be an object.' });
+    }
 
     try {
         const [result] = await db.query(
@@ -308,15 +314,20 @@ router.get('/history', async (req, res) => {
     }
 });
 
-//GET /api/plan/:id 
+//GET /api/plan/:id
 router.get('/:id', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
 
+    const planId = Number(req.params.id);
+    if (!Number.isInteger(planId) || planId <= 0) {
+        return res.status(400).json({ message: 'Invalid plan id.' });
+    }
+
     try {
         const [rows] = await db.query(
             'SELECT * FROM workout_plans WHERE id = ? AND user_id = ?',
-            [req.params.id, authUser.id]
+            [planId, authUser.id]
         );
         if (rows.length === 0) return res.status(404).json({ message: 'Plan not found.' });
         const plan = rows[0];
