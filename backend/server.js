@@ -48,6 +48,14 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
+    // Quick DB sanity check so failures show up in logs immediately
+    try {
+        const db = require('./db');
+        await db.query('SELECT 1');
+        console.log('Database connection OK.');
+    } catch (err) {
+        console.error('Database connection FAILED:', err.message);
+    }
 });
