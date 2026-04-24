@@ -138,7 +138,7 @@
             document.querySelector('.nav-logo').href = 'dashboard.html';
         }
 
-        // "None" checkbox clears all others in its group
+        // Makes the None checkbox exclusive: ticking it unticks everything else, and ticking anything else unticks None.
         function setupNoneCheckbox(noneId, groupSelector) {
             const noneBox = document.getElementById(noneId);
             const siblings = [...document.querySelectorAll(`${groupSelector} input[type="checkbox"]`)]
@@ -157,14 +157,14 @@
         setupNoneCheckbox('dietNone', '.tag-group:nth-of-type(1)');
         setupNoneCheckbox('medNone',  '.tag-group:nth-of-type(2)');
 
-        // Helper to get checked values from a tag group
+        // Returns the selected values from a tag group, dropping "none"
         function getChecked(groupEl) {
             return [...groupEl.querySelectorAll('input[type="checkbox"]:checked')]
                     .map(cb => cb.value)
                     .filter(v => v !== 'none');
         }
 
-        // Pre-fill the form with existing profile data
+        // Fetch the current profile from the API and pre-fill the form, so the user sees what they already saved instead of a blank form
         async function loadProfile() {
             try {
                 const res = await fetch('/api/profile', {
@@ -174,6 +174,7 @@
 
                 const data = await res.json();
 
+                // Only set each field if the server returned a value for it
                 if (data.gender)        document.getElementById('gender').value = data.gender;
                 if (data.age)           document.getElementById('age').value = data.age;
                 if (data.height)        document.getElementById('height').value = data.height;
@@ -181,7 +182,7 @@
                 if (data.fitness_level) document.getElementById('fitness_level').value = data.fitness_level;
                 if (data.goal)          document.getElementById('goal').value = data.goal;
 
-                // Tick dietary preferences
+                // Re tick the dietary checkboxes the user had selected. If the saved list is empty, default to none so the form isn't blank.
                 if (Array.isArray(data.dietary_preferences) && data.dietary_preferences.length > 0) {
                     const tagGroups = document.querySelectorAll('.tag-group');
                     tagGroups[0].querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -191,7 +192,7 @@
                     document.getElementById('dietNone').checked = true;
                 }
 
-                // Tick medical flags
+                // Same logic for medical flags
                 if (Array.isArray(data.medical_flags) && data.medical_flags.length > 0) {
                     const tagGroups = document.querySelectorAll('.tag-group');
                     tagGroups[1].querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -202,13 +203,12 @@
                 }
 
             } catch (err) {
-                // Silently fail — user can still fill form manually
             }
         }
 
         loadProfile();
 
-        // Form submit — UPDATE the profile in the DB
+        // Form submit, UPDATE the profile in the DB
         const form       = document.getElementById('profileForm');
         const errorMsg   = document.getElementById('errorMsg');
         const successMsg = document.getElementById('successMsg');
@@ -220,6 +220,7 @@
 
             const tagGroups = document.querySelectorAll('.tag-group');
 
+            // Gather every field into one payload the backend expects
             const payload = {
                 gender:               document.getElementById('gender').value,
                 age:                  parseInt(document.getElementById('age').value),
@@ -249,6 +250,7 @@
                     return;
                 }
 
+                // Flag used by other pages to know they can now send the user to the dashboard instead of profile setup
                 localStorage.setItem('profileComplete', 'true');
                 successMsg.style.display = 'block';
                 window.scrollTo({ top: 0, behavior: 'smooth' });

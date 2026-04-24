@@ -123,15 +123,14 @@
             endurance: 'Endurance'
         };
 
-        let currentGoal = null;
+        let currentGoal = null; // remembers the selected goal so Print knows there's a list
 
-        // Render list for a given goal
+        // Render the grocery list for the chosen goal
         function renderList(goal) {
             currentGoal = goal;
             const data = GROCERY_LISTS[goal];
             const container = document.getElementById('groceryContainer');
 
-            // Highlight active button
             document.querySelectorAll('.goal-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.goal === goal);
             });
@@ -141,6 +140,7 @@
                 return;
             }
 
+            // Build section HTML each section is a titled list of checkbox items
             const sectionsHtml = data.sections.map(section => `
                 <div class="grocery-section">
                     <h3>${section.name}</h3>
@@ -175,7 +175,7 @@
             btn.addEventListener('click', () => renderList(btn.dataset.goal));
         });
 
-        // Print
+        // Print only works once a goal has been picked
         document.getElementById('printBtn').addEventListener('click', () => {
             if (!currentGoal) {
                 alert('Pick a goal first.');
@@ -184,7 +184,7 @@
             window.print();
         });
 
-        // Auto-select the user's goal from their profile
+        // On page load, fetch the user's profile and select their saved goal  so they don't have to click anything to see the right list
         async function loadUserGoal() {
             try {
                 const res = await fetch('/api/profile', {
@@ -195,7 +195,6 @@
                     renderList(data.goal);
                 }
             } catch (err) {
-                // Silent fail — user can still pick manually
             }
         }
 

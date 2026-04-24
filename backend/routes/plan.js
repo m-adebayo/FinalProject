@@ -19,9 +19,10 @@ function getUser(req, res) {
     }
 }
 
-// ExerciseDB helper 
+// Calls ExerciseDB (via RapidAPI) to get a list of exercises for one body part wrapped in a Promise so we can use it with async/await.
 function fetchExercisesByBodyPart(bodyPart, limit = 20) {
     return new Promise((resolve, reject) => {
+        // Spaces like "upper legs" need to be URL-encoded before going in the path
         const encoded = encodeURIComponent(bodyPart);
         const options = {
             hostname: process.env.RAPIDAPI_HOST,
@@ -145,7 +146,7 @@ const EX_PER_DAY = { beginner: 4, intermediate: 5, advanced: 6 };
 // Body parts to exclude for joint pain
 const JOINT_PAIN_AVOID = ['lower legs'];
 
-// Shuffle helper
+// Fisher–Yates shuffle randomises the array in place so exercises aren't always picked in the same order.
 function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -154,13 +155,13 @@ function shuffle(arr) {
     return arr;
 }
 
-//  GET /api/plan/generate
+// GET /api/plan/generate builds a personalised workout plan
 router.get('/generate', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
 
     try {
-        // Fetch full profile
+        // Need the user's goal + level to know which SPLIT to use
         const [rows] = await db.query(
             'SELECT fitness_level, goal FROM users WHERE id = ?',
             [authUser.id]
@@ -172,7 +173,7 @@ router.get('/generate', async (req, res) => {
             return res.status(400).json({ message: 'Please complete your profile first.' });
         }
 
-        // Get medical flags
+        // Medical flags let us filter out exercises that could hurt the user
         const [medRows] = await db.query(
             'SELECT flag FROM user_medical_flags WHERE user_id = ?',
             [authUser.id]
@@ -182,10 +183,10 @@ router.get('/generate', async (req, res) => {
         const hasHeartIssue   = medFlags.includes('heart condition');
         const hasAsthma       = medFlags.includes('asthma');
 
-        // Build the day plan for this goal + level
+        // Start from the preset split spread copy so we don't mutate SPLITS
         let days = SPLITS[goal][fitness_level].map(d => ({ ...d }));
 
-        // Apply medical filter: remove high-impact body parts for joint pain
+        // Joint pain → drop body parts on the avoid list, and drop days that end up empty after filtering
         if (hasJointPain) {
             days = days.map(d => ({
                 ...d,
@@ -193,7 +194,7 @@ router.get('/generate', async (req, res) => {
             })).filter(d => d.parts.length > 0);
         }
 
-        // Reduce cardio sessions for heart/asthma
+        // Heart condition or asthma, skip cardio for safety
         if (hasHeartIssue || hasAsthma) {
             days = days.map(d => ({
                 ...d,
@@ -204,7 +205,7 @@ router.get('/generate', async (req, res) => {
         const { sets, reps } = PRESCRIPTION[goal];
         const exercisesPerDay = EX_PER_DAY[fitness_level];
 
-        // Fetch exercises for each unique body part (deduplicated)
+        // Collect every body part across all days, then fetch them all in parallel so we don't wait on each API call one by one
         const uniqueParts = [...new Set(days.flatMap(d => d.parts))];
         const exerciseMap = {};
 
@@ -213,18 +214,22 @@ router.get('/generate', async (req, res) => {
                 const data = await fetchExercisesByBodyPart(part, 30);
                 exerciseMap[part] = Array.isArray(data) ? data : [];
             } catch {
+                // If the API fails for one body part, just use an empty list
+                // rather than killing the whole plan generation
                 exerciseMap[part] = [];
             }
         }));
 
-        // Build each day
+        // Now build each day by picking exercises from the fetched pool
         const planDays = days.map(day => {
-            // Gather all exercises from this day's body parts, then shuffle
+            // Combine every exercise across this day's body parts, then shuffle
+            // so the picks vary each time the plan is generated
             const pool = shuffle(
                 day.parts.flatMap(p => (exerciseMap[p] || []).map(ex => ({ ...ex, bodyPart: p })))
             );
 
-            // Pick unique-named exercises up to the limit
+            // Walk through the shuffled pool, keeping only unique names
+            // until we have enough exercises for the day
             const seen = new Set();
             const picked = [];
             for (const ex of pool) {
@@ -269,7 +274,7 @@ router.get('/generate', async (req, res) => {
     }
 });
 
-//POST /api/plan/save
+// POST /api/plan/save — stores a generated plan in the DB so the user can view it later
 router.post('/save', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
@@ -286,6 +291,8 @@ router.post('/save', async (req, res) => {
     }
 
     try {
+        // plan_data is stored as a JSON string so MySQL can keep the whole
+        // nested structure (days, exercises, sets, reps) in one column
         const [result] = await db.query(
             'INSERT INTO workout_plans (user_id, plan_name, plan_data) VALUES (?, ?, ?)',
             [authUser.id, plan_name, JSON.stringify(plan_data)]
@@ -297,7 +304,7 @@ router.post('/save', async (req, res) => {
     }
 });
 
-//GET /api/plan/history
+// GET /api/plan/history — last 10 saved plans for this user
 router.get('/history', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
@@ -314,7 +321,7 @@ router.get('/history', async (req, res) => {
     }
 });
 
-//GET /api/plan/:id
+// GET /api/plan/:id fetches a single saved plan by its ID
 router.get('/:id', async (req, res) => {
     const authUser = getUser(req, res);
     if (!authUser) return;
@@ -325,12 +332,14 @@ router.get('/:id', async (req, res) => {
     }
 
     try {
+        // Match on user_id too — stops one user viewing someone else's plan
         const [rows] = await db.query(
             'SELECT * FROM workout_plans WHERE id = ? AND user_id = ?',
             [planId, authUser.id]
         );
         if (rows.length === 0) return res.status(404).json({ message: 'Plan not found.' });
         const plan = rows[0];
+        // plan_data was saved as a JSON string — parse it back into an object
         plan.plan_data = typeof plan.plan_data === 'string'
             ? JSON.parse(plan.plan_data) : plan.plan_data;
         res.json(plan);

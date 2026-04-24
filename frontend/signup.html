@@ -60,6 +60,7 @@
     </div>
 
     <script>
+        // If already logged in point the logo at the dashboard
         if (localStorage.getItem('token') && JSON.parse(localStorage.getItem('user') || 'null')?.first_name) {
             document.querySelector('.nav-logo').href = 'dashboard.html';
         }
@@ -85,13 +86,14 @@
 
                 const data = await response.json();
 
+                // Show server errors like "email already exists" inline
                 if (!response.ok) {
                     errorMsg.textContent = data.message;
                     errorMsg.style.display = 'block';
                     return;
                 }
 
-                // Store token and user info then redirect to profile setup
+                // Signup worked — save login info and go straight to profile setup
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 window.location.href = 'profile.html';

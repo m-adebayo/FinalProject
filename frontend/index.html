@@ -41,12 +41,13 @@
     </section>
 
     <script>
-        // Show initial of logged-in user in the avatar, or '?' if not logged in
+        // Read who (if anyone) is logged in, both values are saved at login time
         const user = JSON.parse(localStorage.getItem('user') || 'null');
         const token = localStorage.getItem('token');
         const avatarBtn = document.getElementById('avatarBtn');
         const getStartedBtn = document.getElementById('getStartedBtn');
 
+        // If logged in, personalise the nav and change where "Get Started" goes:  finished profile to dashboard, otherwise to profile setup
         if (user && user.first_name && token) {
             document.querySelector('.nav-logo').href = 'dashboard.html';
             avatarBtn.textContent = user.first_name[0].toUpperCase();
@@ -56,23 +57,25 @@
             getStartedBtn.href = profileComplete ? 'dashboard.html' : 'profile.html';
         }
 
-        // Avatar dropdown
+        // Avatar dropdown toggle
         document.getElementById('avatarBtn').addEventListener('click', function(e) {
             e.preventDefault();
             document.getElementById('avatarDropdown').classList.toggle('open');
         });
         document.addEventListener('click', function(e) {
+            // closest() returns null if the click wasn't inside the avatar area
             if (!e.target.closest('.nav-avatar-wrap')) {
                 document.getElementById('avatarDropdown').classList.remove('open');
             }
         });
+        // Log out by clearing stored credentials and returning to the login page
         document.getElementById('logoutBtn').addEventListener('click', function() {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = 'login.html';
         });
 
-        // Help modal
+        // Help modal open from dropdown, close via X or by clicking th
         document.getElementById('helpBtn').addEventListener('click', function() {
             document.getElementById('avatarDropdown').classList.remove('open');
             document.getElementById('helpModal').classList.add('open');

@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const jwt = require('jsonwebtoken');
-
+/*
+ Pulls the JWT from the "Authorization: Bearer <token>" header and verifies it.
+Returns the decoded user payload ({ id, email }) or null if invalid — in which
+case this function has already sent back an error response.
+*/
 function getUser(req, res) {
     const token = (req.headers['authorization'] || '').split(' ')[1];
     if (!token) {
@@ -12,14 +16,14 @@ function getUser(req, res) {
     try {
         return jwt.verify(token, process.env.JWT_SECRET);
     } catch {
+        // Covers both bad signatures and expired tokens
         res.status(403).json({ message: 'Invalid or expired token. Please log in again.' });
         return null;
     }
 }
 
 /**
- * Calculate BMR using Mifflin-St Jeor equation.
- * weight in kg, height in cm, age in years.
+ Calculate BMR using Mifflin-St Jeor equation weight in kg, height in cm, age in years.
  */
 function calcBMR(weight, height, age, gender) {
     const base = (10 * weight) + (6.25 * height) - (5 * age);
@@ -30,7 +34,7 @@ function calcBMR(weight, height, age, gender) {
 }
 
 /**
- * Activity multiplier based on fitness level.
+ Activity multiplier based on fitness level.
  */
 const activityMultiplier = {
     beginner:     1.375,  // lightly active
@@ -39,7 +43,7 @@ const activityMultiplier = {
 };
 
 /**
- * Calorie adjustment for each goal.
+ Calorie adjustment for each goal.
  */
 const goalAdjustment = {
     lose_weight:   -500,
@@ -49,8 +53,8 @@ const goalAdjustment = {
 };
 
 /**
- * Macro ratios (protein / carbs / fat as % of total calories) per goal.
- * Protein & carbs = 4 cal/g, Fat = 9 cal/g.
+ Macro ratios (protein / carbs / fat as % of total calories) per goal.
+ Protein & carbs = 4 cal/g, Fat = 9 cal/g.
  */
 const macroRatios = {
     lose_weight:  { protein: 0.40, carbs: 0.30, fat: 0.30 },
@@ -84,18 +88,19 @@ router.get('/nutrition', async (req, res) => {
             });
         }
 
-        // 1. BMR
+        // 1. BMR, calories your body burns at rest
         const bmr = calcBMR(weight, height, age, gender);
 
-        // 2. TDEE (Total Daily Energy Expenditure)
+        // 2. TDEE, BMR scaled up based on how active the user is
         const multiplier = activityMultiplier[fitness_level] || 1.375;
         const tdee = bmr * multiplier;
 
-        // 3. Adjust for goal
+        // 3. Adjust calories for their goal (e.g. -500 for weight loss)
         const adjustment = goalAdjustment[goal] ?? 0;
         const dailyCalories = Math.round(tdee + adjustment);
 
-        // 4. Macro breakdown in grams
+        // 4. Convert macro ratios (% of calories) into grams.
+        // Protein + carbs = 4 cal/g, fat = 9 cal/g, that's why fat divides by 9.
         const ratios = macroRatios[goal] || macroRatios.maintain;
         const protein = Math.round((dailyCalories * ratios.protein) / 4);
         const carbs   = Math.round((dailyCalories * ratios.carbs)   / 4);

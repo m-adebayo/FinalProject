@@ -2,9 +2,11 @@ const express = require('express');
 const https   = require('https');
 const router  = express.Router();
 
-// System prompts for each bot
+// Builds the "system prompt" sent to OpenAI — this tells the bot who it is
+// and how to behave. Each bot (Freida / Nardo) has a different personality.
 function getSystemPrompt(bot, userContext) {
     const ctx = userContext || {};
+    // If we know the user's name, add it so the bot can greet them personally
     const base = ctx.first_name
         ? `The user's name is ${ctx.first_name}.`
         : '';
@@ -28,7 +30,7 @@ You give helpful, practical nutrition and diet advice. Keep your answers clear a
     return 'You are a helpful fitness assistant.';
 }
 
-// POST /api/chat
+// POST /api/chat forwards user messages to OpenAI and returns the bot's reply
 router.post('/', async (req, res) => {
     const { bot, messages, userContext } = req.body;
 
@@ -36,6 +38,7 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: 'Missing bot or messages field.' });
     }
 
+    // Fail fast if no API key is set — otherwise the request to OpenAI would just 401
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey || apiKey === 'YOUR_OPENAI_KEY_HERE') {
         return res.status(500).json({ error: 'OpenAI API key not configured. Add your key to backend/.env as OPENAI_API_KEY.' });
@@ -43,14 +46,15 @@ router.post('/', async (req, res) => {
 
     const systemPrompt = getSystemPrompt(bot, userContext);
 
+    // Put the system prompt first, then the user's chat history
     const payload = JSON.stringify({
         model: 'gpt-3.5-turbo',
         messages: [
             { role: 'system', content: systemPrompt },
             ...messages
         ],
-        max_tokens: 500,
-        temperature: 0.7
+        max_tokens: 500,   // cap reply length to keep costs low
+        temperature: 0.7   // creativity variable, 0.7 is not too random, not too robotic
     });
 
     const options = {
@@ -64,6 +68,8 @@ router.post('/', async (req, res) => {
         }
     };
 
+    // Send the request to OpenAI. The response comes back in chunks,
+    // so we collect them all before parsing.
     const apiReq = https.request(options, (apiRes) => {
         let data = '';
         apiRes.on('data', chunk => data += chunk);
@@ -73,6 +79,7 @@ router.post('/', async (req, res) => {
                 if (parsed.error) {
                     return res.status(502).json({ error: parsed.error.message });
                 }
+                // The actual reply text lives at choices[0].message.content
                 const reply = parsed.choices?.[0]?.message?.content || 'No response from AI.';
                 res.json({ reply });
             } catch (e) {

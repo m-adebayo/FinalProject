@@ -49,6 +49,7 @@
     </div>
 
     <script>
+        // If they're already logged in, send the logo to the dashboard instead of the landing page
         if (localStorage.getItem('token') && JSON.parse(localStorage.getItem('user') || 'null')?.first_name) {
             document.querySelector('.nav-logo').href = 'dashboard.html';
         }
@@ -64,6 +65,7 @@
             const password = document.getElementById('password').value;
 
             try {
+                // Send credentials to the backend
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -78,14 +80,14 @@
                     return;
                 }
 
-                // Store token and user info
+                // Save the JWT + user info so other pages know who's logged in
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
 
-                // Redirect to dashboard
                 window.location.href = 'dashboard.html';
 
             } catch (err) {
+                // Network error (server down, no internet, etc.)
                 errorMsg.textContent = 'Could not connect to the server.';
                 errorMsg.style.display = 'block';
             }

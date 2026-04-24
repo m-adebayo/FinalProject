@@ -120,32 +120,33 @@
             avatarBtn.textContent = user.first_name[0].toUpperCase();
         }
 
-        // Keep a conversation history per bot
+        // Each bot has its own chat history so the conversations stay separate, stored in arrays.
         const history = {
             freida: [],
             nardo:  []
         };
 
-        // User context to pass to the backend
+        // Pass user information to the bot
         const userContext = user ? {
             first_name:    user.first_name,
             fitness_level: user.fitness_level,
             goal:          user.goal
         } : {};
 
+        // Main send function — one handler, two bots (chosen via the `bot` arg)
         async function sendMessage(bot) {
             const input   = document.getElementById(`input-${bot}`);
             const btn     = document.getElementById(`btn-${bot}`);
             const msgText = input.value.trim();
-            if (!msgText) return;
+            if (!msgText) return; // ignore empty messages
 
-            // Append user bubble
+            // Show the user's message immediately and add it to history
             appendBubble(bot, msgText, 'user');
             history[bot].push({ role: 'user', content: msgText });
             input.value = '';
-            btn.disabled = true;
+            btn.disabled = true; // stop double sends while waiting for a reply
 
-            // Typing indicator
+            // Show a "…" typing indicator while the API thinks
             const typingId = appendTyping(bot);
 
             try {
@@ -168,6 +169,7 @@
                 if (!res.ok || data.error) {
                     appendBubble(bot, data.error || 'Something went wrong. Try again!', 'error');
                 } else {
+                    // Show the bot reply AND push it to history so the bot keeps its memory of the conversation
                     appendBubble(bot, data.reply, 'bot');
                     history[bot].push({ role: 'assistant', content: data.reply });
                 }
@@ -181,15 +183,18 @@
             input.focus();
         }
 
+        // Add a message bubble to the chat
         function appendBubble(bot, text, type) {
             const container = document.getElementById(`messages-${bot}`);
             const bubble = document.createElement('div');
             bubble.className = `chat-bubble ${type === 'user' ? 'user-bubble' : type === 'error' ? 'error-bubble' : 'bot-bubble'}`;
             bubble.textContent = text;
             container.appendChild(bubble);
+            // Auto-scroll to the newest message
             container.scrollTop = container.scrollHeight;
         }
 
+        // Creates the bouncing dot effect
         function appendTyping(bot) {
             const container = document.getElementById(`messages-${bot}`);
             const id = `typing-${bot}-${Date.now()}`;
@@ -207,7 +212,7 @@
             if (el) el.remove();
         }
 
-        // Send on Enter key
+        // Send on Enter key — loop so both input boxes get the same handler
         ['freida', 'nardo'].forEach(bot => {
             document.getElementById(`input-${bot}`).addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') sendMessage(bot);

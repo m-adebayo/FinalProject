@@ -3,6 +3,9 @@ const router = express.Router();
 const db = require('../db');
 const jwt = require('jsonwebtoken');
 
+// Pulls the JWT from the request header and returns the logged-in user.
+// If anything's wrong with the token, it sends the error response itself
+// and returns null so the caller can bail out.
 function getUser(req, res) {
     const token = (req.headers['authorization'] || '').split(' ')[1];
     if (!token) {
@@ -25,7 +28,8 @@ router.get('/', async (req, res) => {
     const userId = req.user.id;
 
     try {
-        // Get core profile fields from users table
+        // Profile info is split across 3 tables so we query each one
+        // and merge them into a single response
         const [rows] = await db.query(
             'SELECT id, first_name, last_name, email, gender, height, weight, age, fitness_level, goal FROM users WHERE id = ?',
             [userId]
@@ -37,18 +41,20 @@ router.get('/', async (req, res) => {
 
         const user = rows[0];
 
-        // Get dietary preferences
+        // Dietary preferences (e.g. vegetarian, gluten-free) — separate table
+        // because a user can have multiple
         const [dietRows] = await db.query(
             'SELECT preference FROM user_dietary_preferences WHERE user_id = ?',
             [userId]
         );
 
-        // Get medical flags
+        // Medical flags (e.g. joint pain, asthma) — same reason
         const [medRows] = await db.query(
             'SELECT flag FROM user_medical_flags WHERE user_id = ?',
             [userId]
         );
 
+        // Flatten rows like [{preference:'vegan'}, ...] into simple string arrays
         res.json({
             ...user,
             dietary_preferences: dietRows.map(r => r.preference),
@@ -113,7 +119,7 @@ router.post('/setup', async (req, res) => {
     }
 
     try {
-        // Update core fields on the users table
+        // Update the main user row
         await db.query(
             `UPDATE users
              SET gender = ?, height = ?, weight = ?, age = ?, fitness_level = ?, goal = ?
@@ -121,9 +127,10 @@ router.post('/setup', async (req, res) => {
             [gender, heightNum, weightNum, ageNum, fitness_level, goal, userId]
         );
 
-        // Replace dietary preferences (delete old, insert new)
+        // For multi value fields (preferences / flags) wipe and re-insert avoids needing to diff the old vs new lists
         await db.query('DELETE FROM user_dietary_preferences WHERE user_id = ?', [userId]);
         if (Array.isArray(dietary_preferences) && dietary_preferences.length > 0) {
+            // Bulk insert shape: [[userId, 'vegan'], [userId, 'gluten-free'], ...]
             const dietValues = dietary_preferences.map(p => [userId, p]);
             await db.query(
                 'INSERT INTO user_dietary_preferences (user_id, preference) VALUES ?',
@@ -131,7 +138,7 @@ router.post('/setup', async (req, res) => {
             );
         }
 
-        // Replace medical flags (delete old, insert new)
+        // Same wipe and reinsert pattern for medical flags
         await db.query('DELETE FROM user_medical_flags WHERE user_id = ?', [userId]);
         if (Array.isArray(medical_flags) && medical_flags.length > 0) {
             const medValues = medical_flags.map(f => [userId, f]);

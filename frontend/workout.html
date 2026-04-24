@@ -73,9 +73,10 @@
         const API = '';
         const token = localStorage.getItem('token');
         let user = null;
+        // Wrap in try/catch in case the stored JSON is corrupted
         try { user = JSON.parse(localStorage.getItem('user') || 'null'); } catch {}
 
-        // Redirect if not logged in
+        // Send them to login if they're not signed in
         if (!token || !user) window.location.href = 'login.html';
 
         // Avatar initial
@@ -85,20 +86,21 @@
             document.querySelector('.nav-logo').href = 'dashboard.html';
         }
 
-        //  Wire up buttons 
+        //  Wire up buttons
         document.getElementById('generateBtn').addEventListener('click', generatePlan);
         document.getElementById('saveBtn').addEventListener('click', savePlan);
 
-        //  Saved plan state 
+        // Holds the plan currently shown on screen so we can save it later
         let currentPlan = null;
 
-        //  Generate plan 
+        // Ask the backend to generate a fresh plan and render it
         async function generatePlan() {
             const btn     = document.getElementById('generateBtn');
             const spinner = document.getElementById('spinner');
             const label   = document.getElementById('generateLabel');
             const status  = document.getElementById('genStatus');
 
+            // Lock the button and show loading state
             btn.disabled = true;
             spinner.style.display = 'block';
             label.textContent = 'Building your plan…';
@@ -113,6 +115,7 @@
                 const data = await res.json();
 
                 if (!res.ok) {
+                    // 400 from this endpoint means the profile isn't complete, display the bammer
                     if (res.status === 400) {
                         document.getElementById('incompleteBanner').style.display = 'block';
                     }
@@ -122,7 +125,7 @@
                 }
 
                 document.getElementById('incompleteBanner').style.display = 'none';
-                currentPlan = data;
+                currentPlan = data; // remember it so Save works
                 renderPlan(data);
 
                 document.getElementById('planSubtitle').textContent =
@@ -133,13 +136,14 @@
                 status.textContent = 'Could not reach the server. Is it running?';
                 status.className = 'status-msg error';
             } finally {
+                // finally runs on success AND failure, always re-enable the button
                 btn.disabled = false;
                 spinner.style.display = 'none';
                 label.textContent = '⚡ Regenerate';
             }
         }
 
-        // Render plan 
+        // Build the HTML for all the plan's days and drop it into the page
         function renderPlan(plan) {
             const container = document.getElementById('planContainer');
             container.innerHTML = '';
@@ -174,10 +178,10 @@
                     </div>
                 `;
 
-                // Open first day by default
+                // Day 1 starts expanded, the rest start collapsed
                 if (idx === 0) card.classList.add('open');
 
-                // Attach toggle listener
+                // Clicking the header opens/closes the card
                 card.querySelector('.day-card-header').addEventListener('click', function () {
                     card.classList.toggle('open');
                 });
@@ -188,6 +192,7 @@
             container.appendChild(grid);
         }
 
+        // Small helper one exercise's HTML block, reused for every exercise
         function exerciseCardHTML(ex) {
             return `
                 <div class="exercise-card">
@@ -206,9 +211,9 @@
             `;
         }
 
-        // Save plan
+        // Send the currently displayed plan to the backend so it gets stored in the DB
         async function savePlan() {
-            if (!currentPlan) return;
+            if (!currentPlan) return; // nothing to save yet
             const btn    = document.getElementById('saveBtn');
             const status = document.getElementById('saveStatus');
             btn.disabled = true;
@@ -236,7 +241,7 @@
 
                 status.textContent = '✓ Plan saved!';
                 status.className = 'status-msg success';
-                loadHistory();
+                loadHistory(); // refresh the history list so the new plan appears
 
             } catch {
                 status.textContent = 'Could not save. Is the server running?';
@@ -245,7 +250,7 @@
             }
         }
 
-        //  History 
+        //  History, fetch the list of saved plans and show them
         async function loadHistory() {
             const list = document.getElementById('historyList');
             try {
@@ -274,6 +279,7 @@
                     `).join('')}
                 </div>`;
 
+                // The load buttons are created from innerHTML, so sttsch the click handlers
                 list.querySelectorAll('.btn-load').forEach(btn => {
                     btn.addEventListener('click', () => loadSavedPlan(btn.dataset.planId));
                 });
@@ -283,6 +289,7 @@
             }
         }
 
+        // Clicking "Load" on a history item pulls that plan and renders it
         async function loadSavedPlan(id) {
             try {
                 const res  = await fetch(`${API}/api/plan/${id}`, {
@@ -291,6 +298,7 @@
                 const data = await res.json();
                 if (!res.ok) return;
 
+                // plan_data holds the nested days/exercises structure
                 currentPlan = data.plan_data;
                 renderPlan(data.plan_data);
                 document.getElementById('planSubtitle').textContent =

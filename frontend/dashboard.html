@@ -120,7 +120,7 @@
     </div>
 
     <script>
-        // Quotes
+        // Pool of motivational quotes, pick a random one each page load
         const quotes = [
             { text: '"We are what we repeatedly do. Excellence is not an act, but a habit."', author: 'Aristotle' },
             { text: '"The body achieves what the mind believes."', author: 'Napoleon Hill' },
@@ -129,6 +129,7 @@
             { text: '"Success is usually the culmination of controlling failure."', author: 'Sylvester Stallone' }
         ];
 
+        // Pick a random quote and drop it into the quote block
         const q = quotes[Math.floor(Math.random() * quotes.length)];
         document.getElementById('quoteBlock').innerHTML =
             `${q.text} <span>– ${q.author}</span>`;
@@ -149,7 +150,7 @@
             window.location.href = 'login.html';
         }
 
-        // Fetch nutrition data 
+        // Hit the nutrition endpoint and render calorie + macro targets
         async function loadNutrition() {
             const el = document.getElementById('nutritionContent');
             try {
@@ -191,16 +192,17 @@
             }
         }
 
-        // Fetch latest workout plan 
+        // Load the user's most recent plan and show today's session from it
         async function loadWorkout() {
             const el = document.getElementById('workoutSummary');
             try {
-                // Get the most recent saved plan
+                // Grab the history list, newest first
                 const histRes = await fetch('/api/plan/history', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const history = await histRes.json();
 
+                // If no saved plans yet, prompt user to make one
                 if (!histRes.ok || !history.length) {
                     el.innerHTML = `
                         <p class="workout-label">Today's Workout</p>
@@ -208,14 +210,14 @@
                     return;
                 }
 
-                // Fetch the full plan
+                // Fetch the full details of the newest plan
                 const latestId = history[0].id;
                 const planRes  = await fetch(`/api/plan/${latestId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const plan = await planRes.json();
 
-                // Pick today's day by day-of-week index (wraps around plan length)
+                // Work out which day to show. getDay() = 0 (Sun)..6 (Sat).
                 const days      = plan.plan_data?.days || [];
                 const dayIndex  = new Date().getDay() % days.length;
                 const today     = days[dayIndex] || days[0];
@@ -225,7 +227,7 @@
                     return;
                 }
 
-                // Show first 4 exercises by name
+                // Keep the dashboard preview short showing first 4 exercises only
                 const preview = today.exercises.slice(0, 4);
                 const listItems = preview.map(e =>
                     `<li>${e.name.charAt(0).toUpperCase() + e.name.slice(1)}</li>`
@@ -271,7 +273,6 @@
             if (e.target === this) this.classList.remove('open');
         });
 
-        //Init
         loadNutrition();
         loadWorkout();
     </script>

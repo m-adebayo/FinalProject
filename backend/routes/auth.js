@@ -7,15 +7,17 @@ const db = require('../db');
 // Simple email format check
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// POST /api/auth/signup — creates a new user account
 router.post('/signup', async (req, res) => {
     let { first_name, last_name, email, password } = req.body;
 
-    // Basic validation
+    // Make sure nothing was left blank before doing any DB work
     if (!first_name || !last_name || !email || !password) {
         return res.status(400).json({ message: 'All fields are required.' });
     }
 
-    // Trim whitespace
+    // Clean the inputs — lowercase the email so "Bob@x.com" and "bob@x.com"
+    // count as the same account
     first_name = String(first_name).trim();
     last_name = String(last_name).trim();
     email = String(email).trim().toLowerCase();
@@ -37,12 +39,13 @@ router.post('/signup', async (req, res) => {
     }
 
     try {
-        // Check if email already exists
+        // Stop duplicate accounts — check if that email is already taken
         const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
         if (existing.length > 0) {
             return res.status(409).json({ message: 'An account with that email already exists.' });
         }
 
+        // Never store plain-text passwords,hash with bcrypt (10 salt rounds)
         const password_hash = await bcrypt.hash(password, 10);
 
         const [result] = await db.query(
@@ -50,7 +53,8 @@ router.post('/signup', async (req, res) => {
             [first_name, last_name, email, password_hash]
         );
 
-        // Generate a JWT so the user is logged in straight after signing up
+        // Give back a JWT so they're automatically logged in after signup
+        // (token lasts 7 days, then they'll need to log in again)
         const token = jwt.sign(
             { id: result.insertId, email },
             process.env.JWT_SECRET,
@@ -74,6 +78,7 @@ router.post('/signup', async (req, res) => {
     }
 });
 
+// POST /api/auth/login — checks credentials and issues a JWT
 router.post('/login', async (req, res) => {
     let { email, password } = req.body;
 
@@ -90,11 +95,13 @@ router.post('/login', async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
         if (rows.length === 0) {
+            // Deliberately vague message — don't reveal whether the email exists
             return res.status(401).json({ message: 'Invalid email or password.' });
         }
 
         const user = rows[0];
 
+        // bcrypt.compare hashes the entered password the same way and checks it matches
         const match = await bcrypt.compare(password, user.password_hash);
         if (!match) {
             return res.status(401).json({ message: 'Invalid email or password.' });
